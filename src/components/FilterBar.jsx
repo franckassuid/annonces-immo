@@ -1,47 +1,167 @@
-import { STATUS } from '../utils';
+import { useState, useMemo } from 'react';
+import FilterDropdown from './FilterDropdown';
+import { STATUS, EXTERIOR, CITIES } from '../utils';
 
-const STATUSES = ['all', ...Object.keys(STATUS)];
-const LABELS   = { all: 'Toutes', ...Object.fromEntries(Object.entries(STATUS).map(([k,v]) => [k, v.label])) };
+export default function FilterBar({
+  selectedStatuses = [],
+  setSelectedStatuses,
+  selectedCities = [],
+  setSelectedCities,
+  selectedExteriors = [],
+  setSelectedExteriors,
+  selectedDpes = [],
+  setSelectedDpes,
+  showFav,
+  toggleFav,
+  sortBy,
+  setSortBy,
+  count,
+  availableCities = [],
+  onResetFilters,
+  hasActiveFilters,
+}) {
+  // Only one popover open at a time
+  const [openDropdown, setOpenDropdown] = useState(null);
 
-export default function FilterBar({ status, setStatus, showFav, toggleFav, sortBy, setSortBy, count }) {
+  const toggleDropdown = (name) => {
+    setOpenDropdown((curr) => (curr === name ? null : name));
+  };
+
+  const closeDropdown = () => setOpenDropdown(null);
+
+  // Status options
+  const statusOptions = useMemo(() => {
+    return Object.entries(STATUS).map(([key, val]) => ({
+      value: key,
+      label: val.label,
+    }));
+  }, []);
+
+  // City options (dynamic from ads + standard cities)
+  const cityOptions = useMemo(() => {
+    const combined = new Set([...availableCities, ...CITIES]);
+    return Array.from(combined)
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, 'fr'))
+      .map((c) => ({ value: c, label: c }));
+  }, [availableCities]);
+
+  // Exterior options
+  const exteriorOptions = useMemo(() => {
+    const list = Object.entries(EXTERIOR).map(([key, label]) => ({
+      value: key,
+      label,
+    }));
+    list.push({ value: 'none', label: '🚫 Sans extérieur' });
+    return list;
+  }, []);
+
+  // DPE options
+  const dpeOptions = useMemo(() => {
+    return [
+      { value: 'A', label: 'A' },
+      { value: 'B', label: 'B' },
+      { value: 'C', label: 'C' },
+      { value: 'D', label: 'D' },
+      { value: 'E', label: 'E' },
+      { value: 'F', label: 'F' },
+      { value: 'G', label: 'G' },
+      { value: 'Non renseigné', label: 'Non renseigné' },
+    ];
+  }, []);
+
   return (
     <div className="filter-bar">
-      <button
-        className={`chip fav${showFav ? ' active' : ''}`}
-        onClick={toggleFav}
-      >
-        ⭐ Favoris
-      </button>
-
-      <div className="filter-sep" />
-
-      {STATUSES.map((s) => (
+      <div className="filter-scroll-row">
+        {/* Favoris Quick Toggle */}
         <button
-          key={s}
-          className={`chip${status === s ? ' active' : ''}`}
-          onClick={() => setStatus(s)}
+          type="button"
+          className={`chip fav${showFav ? ' active' : ''}`}
+          onClick={toggleFav}
         >
-          {LABELS[s]}
+          ⭐ Favoris
         </button>
-      ))}
 
-      <div className="filter-sep" />
+        <div className="filter-sep" />
 
-      <select
-        className="sort-select"
-        value={sortBy}
-        onChange={(e) => setSortBy(e.target.value)}
-      >
-        <option value="date-desc">Plus récent</option>
-        <option value="date-asc">Plus ancien</option>
-        <option value="prix-asc">Prix ↑</option>
-        <option value="prix-desc">Prix ↓</option>
-        <option value="score-desc">Meilleur score</option>
-      </select>
+        {/* Statuts Multi-select */}
+        <FilterDropdown
+          label="Statut"
+          icon="🏷"
+          options={statusOptions}
+          selected={selectedStatuses}
+          onChange={setSelectedStatuses}
+          isOpen={openDropdown === 'status'}
+          onToggle={() => toggleDropdown('status')}
+          onClose={closeDropdown}
+        />
 
-      <span className="count-tag">
-        {count} {count === 1 ? 'annonce' : 'annonces'}
-      </span>
+        {/* Villes Multi-select */}
+        <FilterDropdown
+          label="Ville"
+          icon="📍"
+          options={cityOptions}
+          selected={selectedCities}
+          onChange={setSelectedCities}
+          isOpen={openDropdown === 'city'}
+          onToggle={() => toggleDropdown('city')}
+          onClose={closeDropdown}
+        />
+
+        {/* Extérieur Multi-select */}
+        <FilterDropdown
+          label="Extérieur"
+          icon="☀️"
+          options={exteriorOptions}
+          selected={selectedExteriors}
+          onChange={setSelectedExteriors}
+          isOpen={openDropdown === 'exterior'}
+          onToggle={() => toggleDropdown('exterior')}
+          onClose={closeDropdown}
+        />
+
+        {/* DPE Multi-select */}
+        <FilterDropdown
+          label="DPE"
+          icon="⚡"
+          options={dpeOptions}
+          selected={selectedDpes}
+          onChange={setSelectedDpes}
+          isOpen={openDropdown === 'dpe'}
+          onToggle={() => toggleDropdown('dpe')}
+          onClose={closeDropdown}
+        />
+
+        {/* Reset button if any filter active */}
+        {hasActiveFilters && (
+          <button
+            type="button"
+            className="btn-filter-reset"
+            onClick={onResetFilters}
+            title="Réinitialiser tous les filtres"
+          >
+            ✕ Réinitialiser
+          </button>
+        )}
+      </div>
+
+      <div className="filter-end-row">
+        <select
+          className="sort-select"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+        >
+          <option value="date-desc">Plus récent</option>
+          <option value="date-asc">Plus ancien</option>
+          <option value="prix-asc">Prix ↑</option>
+          <option value="prix-desc">Prix ↓</option>
+          <option value="score-desc">Meilleur score</option>
+        </select>
+
+        <span className="count-tag">
+          {count} {count <= 1 ? 'annonce' : 'annonces'}
+        </span>
+      </div>
     </div>
   );
 }
