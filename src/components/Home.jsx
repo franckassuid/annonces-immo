@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header        from './Header';
 import FilterBar     from './FilterBar';
 import AnnonceCard   from './AnnonceCard';
+import AnnonceRow    from './AnnonceRow';
 import MapView       from './MapView';
 
 function avg(a) {
@@ -10,9 +11,10 @@ function avg(a) {
   return vals.length ? vals.reduce((t, v) => t + v, 0) / vals.length : 0;
 }
 
-export default function Home({ annonces, loading, toast, showToast, syncState }) {
+export default function Home({ annonces = [], loading, toast, showToast, syncState }) {
   const navigate = useNavigate();
 
+  // 'grid' | 'list' | 'map'
   const [view, setView] = useState('grid');
   
   // Multi-select filters
@@ -22,9 +24,15 @@ export default function Home({ annonces, loading, toast, showToast, syncState })
   const [selectedDpes, setSelectedDpes] = useState([]);
   
   const [showFav, setShowFav] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [sortBy, setSortBy] = useState('date-desc');
 
-  // Collect all distinct cities from loaded listings
+  // Count of archived listings
+  const archivedCount = useMemo(() => {
+    return annonces.filter((a) => !!a.archived).length;
+  }, [annonces]);
+
+  // Collect all distinct cities from active listings
   const availableCities = useMemo(() => {
     const set = new Set();
     annonces.forEach((a) => {
@@ -51,7 +59,8 @@ export default function Home({ annonces, loading, toast, showToast, syncState })
   };
 
   const filtered = useMemo(() => {
-    let list = annonces.slice();
+    // 0. Base filter: active vs archived
+    let list = annonces.filter((a) => (showArchived ? !!a.archived : !a.archived));
 
     // 1. Favoris filter
     if (showFav) {
@@ -63,7 +72,7 @@ export default function Home({ annonces, loading, toast, showToast, syncState })
       list = list.filter((a) => selectedStatuses.includes(a.statut));
     }
 
-    // 3. Cities multi-select (case-insensitive trim compare)
+    // 3. Cities multi-select
     if (selectedCities.length > 0) {
       const lowerCities = selectedCities.map((c) => c.toLowerCase());
       list = list.filter((a) => a.ville && lowerCities.includes(a.ville.trim().toLowerCase()));
@@ -109,7 +118,7 @@ export default function Home({ annonces, loading, toast, showToast, syncState })
     }
 
     return list;
-  }, [annonces, showFav, selectedStatuses, selectedCities, selectedExteriors, selectedDpes, sortBy]);
+  }, [annonces, showArchived, showFav, selectedStatuses, selectedCities, selectedExteriors, selectedDpes, sortBy]);
 
   return (
     <>
@@ -131,6 +140,9 @@ export default function Home({ annonces, loading, toast, showToast, syncState })
         setSelectedDpes={setSelectedDpes}
         showFav={showFav}
         toggleFav={() => setShowFav((f) => !f)}
+        showArchived={showArchived}
+        toggleArchived={() => setShowArchived((a) => !a)}
+        archivedCount={archivedCount}
         sortBy={sortBy}
         setSortBy={setSortBy}
         count={filtered.length}
@@ -139,6 +151,21 @@ export default function Home({ annonces, loading, toast, showToast, syncState })
         hasActiveFilters={hasActiveFilters}
       />
 
+      {/* Archived alert banner */}
+      {showArchived && (
+        <div className="archived-banner">
+          <span>📦 <b>Mode Archives</b> : {filtered.length} annonce{filtered.length > 1 ? 's' : ''} archivée{filtered.length > 1 ? 's' : ''}</span>
+          <button
+            type="button"
+            className="btn-exit-archived"
+            onClick={() => setShowArchived(false)}
+          >
+            ← Retour aux annonces actives
+          </button>
+        </div>
+      )}
+
+      {/* Grid View */}
       {view === 'grid' && (
         <div className="grid-wrapper">
           {loading ? (
@@ -151,17 +178,23 @@ export default function Home({ annonces, loading, toast, showToast, syncState })
             <div className="grid">
               {filtered.length === 0 ? (
                 <div className="empty">
-                  <div className="empty-icon">{annonces.length === 0 ? '🏠' : '🔍'}</div>
+                  <div className="empty-icon">
+                    {showArchived ? '📦' : annonces.length === 0 ? '🏠' : '🔍'}
+                  </div>
                   <h2>
-                    {annonces.length === 0
+                    {showArchived
+                      ? 'Aucune annonce dans les archives'
+                      : annonces.length === 0
                       ? 'Ajoutez votre première annonce !'
                       : 'Aucune annonce ne correspond à vos filtres'}
                   </h2>
                   <p>
-                    {annonces.length === 0
+                    {showArchived
+                      ? 'Les annonces que vous supprimez apparaîtront ici.'
+                      : annonces.length === 0
                       ? 'Cliquez sur « + Ajouter » pour commencer.'
                       : hasActiveFilters
-                      ? 'Essayez de décocher certains filtres ou cliquez sur « Réinitialiser ».'
+                      ? 'Essayez de modifier vos filtres ou cliquez sur « Réinitialiser ».'
                       : 'Modifiez vos critères pour voir des annonces.'}
                   </p>
                   {hasActiveFilters && (
@@ -191,6 +224,60 @@ export default function Home({ annonces, loading, toast, showToast, syncState })
         </div>
       )}
 
+      {/* List / Row View */}
+      {view === 'list' && (
+        <div className="list-wrapper">
+          {loading ? (
+            <div className="list-rows">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="skeleton-row" />
+              ))}
+            </div>
+          ) : (
+            <div className="list-rows">
+              {filtered.length === 0 ? (
+                <div className="empty">
+                  <div className="empty-icon">
+                    {showArchived ? '📦' : annonces.length === 0 ? '🏠' : '🔍'}
+                  </div>
+                  <h2>
+                    {showArchived
+                      ? 'Aucune annonce archivée'
+                      : 'Aucune annonce trouvée'}
+                  </h2>
+                  <p>
+                    {hasActiveFilters
+                      ? 'Essayez de réinitialiser vos filtres.'
+                      : 'Aucune annonce à afficher en mode liste.'}
+                  </p>
+                  {hasActiveFilters && (
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      style={{ marginTop: 12 }}
+                      onClick={handleResetFilters}
+                    >
+                      Effacer les filtres
+                    </button>
+                  )}
+                </div>
+              ) : (
+                filtered.map((a) => (
+                  <AnnonceRow
+                    key={a.id}
+                    annonce={a}
+                    onClick={() => navigate(`/annonce/${a.id}`)}
+                    onToast={showToast}
+                    isArchived={showArchived}
+                  />
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Map View */}
       {view === 'map' && (
         <MapView annonces={filtered} onEdit={(id) => navigate(`/annonce/${id}`)} />
       )}

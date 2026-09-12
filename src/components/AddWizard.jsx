@@ -2,97 +2,114 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { CITIES, geocode, setPhoto } from '../utils';
+import { STATUS, EXTERIOR, CITIES, geocode, setPhoto } from '../utils';
 
-const SOURCES = ['Le Bon Coin','Jinka','SeLoger','Bien\'ici','PAP','Logic-Immo','Autre'];
+const SOURCES = ['Le Bon Coin', 'SeLoger', 'PAP', 'Jinka', 'Bien\'ici', 'Autre'];
+
 const EXT_OPT = [
-  { value:'balcon',         label:'🪟 Balcon' },
-  { value:'terrasse',       label:'☀️ Terrasse' },
-  { value:'grande-terrasse',label:'🌅 Grande terrasse' },
-  { value:'jardin',         label:'🌿 Jardin' },
-  { value:'grand-jardin',   label:'🌳 Grand jardin' },
+  { value: 'aucun',            label: '🚫 Aucun' },
+  { value: 'balcon',           label: '🪟 Balcon' },
+  { value: 'terrasse',         label: '☀️ Terrasse' },
+  { value: 'grande-terrasse',  label: '🌅 Grande terrasse' },
+  { value: 'jardin',           label: '🌿 Jardin' },
+  { value: 'grand-jardin',     label: '🌳 Grand jardin' },
 ];
 
-/* ── StarPicker ── */
-function StarPicker({ value, onChange, label }) {
-  const [hover, setHover] = useState(0);
+const DPE_OPTS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'Non renseigné'];
+const PIECES_OPTS = ['1', '2', '3', '4', '5', '6+'];
+const CHAMBRES_OPTS = ['0', '1', '2', '3', '4', '5+'];
+
+function StarPicker({ label, value, onChange }) {
   return (
-    <div className="fg">
-      <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        {label} 
-        <span className="star-score">{value ? `${value}/10` : '—'}</span>
-      </label>
-      <div className="star-picker-wrap">
-        <div className="star-picker">
-          {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-            <button
-              key={n} type="button"
-              className={`star-btn${n <= (hover || value) ? ' lit' : ''}`}
-              onClick={() => onChange(n)}
-              onMouseEnter={() => setHover(n)}
-              onMouseLeave={() => setHover(0)}
-            >★</button>
-          ))}
-        </div>
+    <div className="star-picker-wrap">
+      <label>{label}</label>
+      <div className="star-row">
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
+          <button
+            type="button"
+            key={star}
+            className={`star-btn ${value >= star ? 'filled' : ''}`}
+            onClick={() => onChange(value === star ? 0 : star)}
+            title={`${star}/10`}
+          >
+            ★
+          </button>
+        ))}
+        <span className="star-score-val">{value ? `${value}/10` : '—'}</span>
       </div>
     </div>
   );
 }
 
-/* ── PhotoUpload ── */
 function PhotoUpload({ photo, onChange, onClear }) {
-  function handleFile(e) {
-    const file = e.target.files[0]; if (!file) return;
+  const handleFile = (file) => {
+    if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const maxW = 800; let w = img.width, h = img.height;
-        if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
-        const c = document.createElement('canvas'); c.width = w; c.height = h;
-        c.getContext('2d').drawImage(img, 0, 0, w, h);
-        onChange(c.toDataURL('image/jpeg', 0.8));
+        const canvas = document.createElement('canvas');
+        const MAX = 1200;
+        let { width, height } = img;
+        if (width > height && width > MAX) {
+          height = Math.round((height * MAX) / width);
+          width = MAX;
+        } else if (height > MAX) {
+          width = Math.round((width * MAX) / height);
+          height = MAX;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        onChange(canvas.toDataURL('image/jpeg', 0.82));
       };
-      img.src = ev.target.result;
+      img.src = e.target.result;
     };
     reader.readAsDataURL(file);
-  }
+  };
 
   return (
-    <div className="photo-upload">
+    <div className="photo-upload-wrap">
+      <label>Photo principale</label>
       {photo ? (
-        <>
-          <img src={photo} className="photo-preview-img" alt="preview" />
-          <button type="button" className="photo-remove-btn" onClick={(e) => { e.stopPropagation(); onClear(); }}>
+        <div className="photo-preview-box">
+          <img src={photo} alt="Aperçu" className="photo-preview-img" />
+          <button type="button" className="btn-remove-photo" onClick={onClear}>
             ✕ Supprimer
           </button>
-        </>
+        </div>
       ) : (
-        <>
-          <input type="file" accept="image/*" onChange={handleFile} />
+        <label className="photo-upload">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => handleFile(e.target.files[0])}
+            style={{ display: 'none' }}
+          />
           <div className="photo-upload-text">
-            <strong>📷 Choisir une photo</strong>
-            JPG · PNG · WEBP
+            <span>📷</span>
+            <strong>Ajouter une photo</strong>
+            <small>Glisser ou cliquer</small>
           </div>
-        </>
+        </label>
       )}
     </div>
   );
 }
 
 const SAMPLE_JSON = {
-  titre: "T3 lumineux avec balcon vue dégagée - Proche Tram B",
+  titre: "T3 lumineux avec terrasse plein sud - Proche Tram",
   prix: 1250,
   surface: 68,
   pieces: 3,
   chambres: 2,
   dpe: "C",
-  exterieur: "balcon",
+  exterieur: "terrasse",
   ville: "Bordeaux",
   adresse: "15 Rue Sainte-Catherine",
-  statut: "visite",
+  statut: "appeler",
   source: "Le Bon Coin",
-  url: "https://www.leboncoin.fr/locations/2481928341.htm",
+  url: "https://www.leboncoin.fr/locations/...",
   agenceType: "agence",
   agenceNom: "Immobilier Bordelais",
   cnom: "Thomas Mercier",
@@ -101,8 +118,35 @@ const SAMPLE_JSON = {
   scoreFranck: 8,
   scoreLaura: 9,
   notes: "Parquet ancien rénové, double vitrage récent, cave privative. Très calme.",
-  photo: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&auto=format&fit=crop"
+  photo: ""
 };
+
+const AI_PROMPT_TEMPLATE = `Tu es un assistant spécialisé dans l'extraction d'annonces immobilières.
+Extrais les données de l'annonce immobilière suivante et renvoie UNIQUEMENT un objet JSON valide (aucun texte avant ou après), respectant scrupuleusement ces champs et options autorisées :
+
+{
+  "titre": "string (ex: T3 meublé proche tramway)",
+  "prix": number (loyer mensuel charges comprises en euros, ex: 1200),
+  "surface": number (surface en m², ex: 65),
+  "pieces": number (nombre total de pièces, ex: 3),
+  "chambres": number (nombre de chambres, ex: 2),
+  "dpe": "A" | "B" | "C" | "D" | "E" | "F" | "G" | "Non renseigné",
+  "exterieur": "aucun" | "balcon" | "terrasse" | "grande-terrasse" | "jardin" | "grand-jardin",
+  "ville": "Bordeaux" | "Talence" | "Pessac" | "Mérignac" | "Bègles" | "Villenave-d'Ornon" (ou autre ville),
+  "adresse": "string (adresse ou quartier si disponible)",
+  "statut": "appeler" | "visite" | "dossier" | "attente" | "refuse" | "ok",
+  "source": "Le Bon Coin" | "SeLoger" | "PAP" | "Jinka" | "Bien'ici" | "Autre",
+  "url": "string (lien de l'annonce si fourni)",
+  "agenceType": "agence" | "particulier",
+  "agenceNom": "string (nom de l'agence si agence)",
+  "cnom": "string (nom de la personne de contact)",
+  "ctel": "string (numéro de téléphone)",
+  "visitDate": "string (format ISO YYYY-MM-DDTHH:mm si un rendez-vous est prévu)",
+  "notes": "string (résumé des atouts, charges, transports, étage...)"
+}
+
+Voici l'annonce à analyser :
+`;
 
 export default function AddWizard({ onToast }) {
   const navigate = useNavigate();
@@ -112,24 +156,45 @@ export default function AddWizard({ onToast }) {
 
   // JSON Import state
   const [jsonText, setJsonText] = useState('');
-  const [jsonStatus, setJsonStatus] = useState(null); // { valid: bool, msg: string }
+  const [jsonStatus, setJsonStatus] = useState(null);
 
   // Form State
   const [formData, setFormData] = useState({
-    source: '', statut: 'appeler', titre: '', url: '', agenceType: '', agenceNom: '',
-    adresse: '', ville: '', villeCustom: '',
-    prix: '', surface: '', pieces: '', chambres: '', dpe: '', exterieur: '',
-    cnom: '', ctel: '',
-    notes: '', scoreFranck: 0, scoreLaura: 0, visitDate: '', rappelTitre: '', rappelDate: ''
+    source: 'Le Bon Coin',
+    statut: 'appeler',
+    titre: '',
+    url: '',
+    agenceType: 'agence',
+    agenceNom: '',
+    adresse: '',
+    ville: 'Bordeaux',
+    villeCustom: '',
+    prix: '',
+    surface: '',
+    pieces: '3',
+    chambres: '2',
+    dpe: 'C',
+    exterieur: 'aucun',
+    cnom: '',
+    ctel: '',
+    notes: '',
+    scoreFranck: 0,
+    scoreLaura: 0,
+    visitDate: '',
   });
   const [photo, setPhotoState] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const getVille = () => formData.ville === '__autre' ? formData.villeCustom : formData.ville;
+  const handleFieldSelect = (name, value) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const getVille = () =>
+    formData.ville === '__autre' ? formData.villeCustom : formData.ville;
 
   const handleNext = (e) => {
     e.preventDefault();
@@ -141,20 +206,27 @@ export default function AddWizard({ onToast }) {
     setSaving(true);
     const ville = getVille();
     const { adresse } = formData;
-    
-    let lat = null, lng = null;
+
+    let lat = null,
+      lng = null;
     const q = [adresse, ville].filter(Boolean).join(', ');
     if (q) {
       const geo = await geocode(q);
-      if (geo) { lat = geo.lat; lng = geo.lng; }
+      if (geo) {
+        lat = geo.lat;
+        lng = geo.lng;
+      }
     }
 
     const data = {
       ...formData,
-      ville, lat, lng,
+      ville,
+      lat,
+      lng,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      fav: false
+      fav: false,
+      archived: false,
     };
     delete data.villeCustom;
 
@@ -165,12 +237,12 @@ export default function AddWizard({ onToast }) {
       navigate(`/annonce/${ref.id}`);
     } catch (err) {
       console.error(err);
-      onToast('⚠️ Erreur lors de l\'enregistrement');
+      onToast("⚠️ Erreur lors de l'enregistrement");
       setSaving(false);
     }
   };
 
-  // ── JSON Import Handlers ──
+  // JSON Import Handlers
   const handleJsonChange = (text) => {
     setJsonText(text);
     if (!text.trim()) {
@@ -181,9 +253,15 @@ export default function AddWizard({ onToast }) {
       const parsed = JSON.parse(text);
       const isArr = Array.isArray(parsed);
       const count = isArr ? parsed.length : 1;
-      setJsonStatus({ valid: true, msg: `✓ JSON valide (${count} annonce${count > 1 ? 's' : ''})` });
+      setJsonStatus({
+        valid: true,
+        msg: `✓ JSON valide (${count} annonce${count > 1 ? 's' : ''})`,
+      });
     } catch (err) {
-      setJsonStatus({ valid: false, msg: `⚠️ Erreur de syntaxe JSON : ${err.message}` });
+      setJsonStatus({
+        valid: false,
+        msg: `⚠️ Erreur de syntaxe JSON : ${err.message}`,
+      });
     }
   };
 
@@ -192,348 +270,546 @@ export default function AddWizard({ onToast }) {
     handleJsonChange(formatted);
   };
 
-  const handleDownloadTemplate = () => {
-    const blob = new Blob([JSON.stringify(SAMPLE_JSON, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'modele_annonce.json';
-    a.click();
-    URL.revokeObjectURL(url);
-    onToast('💾 Modèle JSON téléchargé');
-  };
-
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      handleJsonChange(ev.target.result);
-      onToast(`📂 Fichier ${file.name} chargé`);
-    };
-    reader.readAsText(file);
+  const handleCopyAiPrompt = () => {
+    navigator.clipboard.writeText(AI_PROMPT_TEMPLATE);
+    onToast('📋 Prompt pour l\'IA copié dans le presse-papier !');
   };
 
   const handleImportJson = async () => {
-    if (!jsonText.trim()) {
-      onToast('⚠️ Veuillez coller ou charger un fichier JSON');
-      return;
-    }
-
-    let parsed;
-    try {
-      parsed = JSON.parse(jsonText);
-    } catch (err) {
-      onToast('⚠️ Le JSON est invalide, vérifiez la syntaxe');
-      return;
-    }
-
+    if (!jsonText.trim()) return;
     setSaving(true);
-    const items = Array.isArray(parsed) ? parsed : [parsed];
-
     try {
-      let lastId = null;
-      for (const item of items) {
-        const ville = item.ville || '';
-        const adresse = item.adresse || '';
-        let lat = item.lat || null, lng = item.lng || null;
+      const parsed = JSON.parse(jsonText);
+      const items = Array.isArray(parsed) ? parsed : [parsed];
 
+      let successCount = 0;
+      for (const item of items) {
+        const ville = item.ville || 'Bordeaux';
+        const adresse = item.adresse || '';
+
+        let lat = item.lat || null;
+        let lng = item.lng || null;
         if (!lat && (adresse || ville)) {
           const geo = await geocode([adresse, ville].filter(Boolean).join(', '));
-          if (geo) { lat = geo.lat; lng = geo.lng; }
+          if (geo) {
+            lat = geo.lat;
+            lng = geo.lng;
+          }
         }
 
-        const cleanData = {
-          titre: item.titre || 'Annonce importée',
-          prix: item.prix ? String(item.prix) : '',
-          surface: item.surface ? String(item.surface) : '',
-          pieces: item.pieces ? String(item.pieces) : '',
-          chambres: item.chambres ? String(item.chambres) : '',
+        const data = {
+          titre: item.titre || 'Nouvelle annonce',
+          prix: item.prix ? Number(item.prix) : '',
+          surface: item.surface ? Number(item.surface) : '',
+          pieces: item.pieces ? Number(item.pieces) : '',
+          chambres: item.chambres ? Number(item.chambres) : '',
           dpe: item.dpe || 'Non renseigné',
-          exterieur: item.exterieur || '',
+          exterieur: item.exterieur || 'aucun',
+          ville,
+          adresse,
+          lat,
+          lng,
           statut: item.statut || 'appeler',
-          source: item.source || '',
+          source: item.source || 'Import JSON',
           url: item.url || '',
-          agenceType: item.agenceType || '',
+          agenceType: item.agenceType || 'agence',
           agenceNom: item.agenceNom || '',
           cnom: item.cnom || '',
           ctel: item.ctel || '',
           visitDate: item.visitDate || '',
-          scoreFranck: Number(item.scoreFranck) || 0,
-          scoreLaura: Number(item.scoreLaura) || 0,
+          scoreFranck: item.scoreFranck ? Number(item.scoreFranck) : 0,
+          scoreLaura: item.scoreLaura ? Number(item.scoreLaura) : 0,
           notes: item.notes || '',
-          adresse, ville, lat, lng,
-          fav: !!item.fav,
-          createdAt: item.createdAt || new Date().toISOString(),
+          createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
+          fav: false,
+          archived: false,
         };
 
-        const ref = await addDoc(collection(db, 'annonces'), cleanData);
-        lastId = ref.id;
-
+        const ref = await addDoc(collection(db, 'annonces'), data);
         if (item.photo) {
           setPhoto(ref.id, item.photo);
         }
+        successCount++;
       }
 
-      onToast(`✅ ${items.length} annonce${items.length > 1 ? 's' : ''} importée${items.length > 1 ? 's' : ''} !`);
-      if (items.length === 1 && lastId) {
-        navigate(`/annonce/${lastId}`);
-      } else {
-        navigate('/');
-      }
+      onToast(`✅ ${successCount} annonce(s) importée(s) avec succès !`);
+      navigate('/');
     } catch (err) {
       console.error(err);
-      onToast('⚠️ Erreur lors de l\'import');
+      onToast(`⚠️ Erreur d'importation : ${err.message}`);
       setSaving(false);
     }
   };
 
   return (
     <div className="wizard-container">
-      <div className="wizard-header">
-        <button className="btn-ghost" onClick={() => navigate('/')}>← Retour</button>
-        <h2>Nouvelle annonce</h2>
-        {mode === 'wizard' ? (
-          <div className="wizard-steps">
-            {[1,2,3,4].map(num => (
-              <div key={num} className={`wizard-dot ${step >= num ? 'active' : ''}`} />
-            ))}
-          </div>
-        ) : (
-          <span className="import-badge-tag">Format JSON</span>
-        )}
-      </div>
-
-      {/* Mode Switcher */}
-      <div className="mode-toggle-tabs">
+      <div className="wizard-top-nav">
         <button
           type="button"
-          className={`mode-tab ${mode === 'wizard' ? 'active' : ''}`}
+          className="btn-back"
+          onClick={() => navigate('/')}
+        >
+          ← Retour
+        </button>
+        <span className="wizard-page-title">Nouvelle annonce</span>
+        <div className="wizard-steps-dots">
+          {mode === 'wizard' &&
+            [1, 2, 3, 4].map((i) => (
+              <span
+                key={i}
+                className={`wdot ${step === i ? 'active' : ''} ${step > i ? 'done' : ''}`}
+              />
+            ))}
+        </div>
+      </div>
+
+      {/* Mode Switcher Tabs */}
+      <div className="wizard-mode-tabs">
+        <button
+          type="button"
+          className={`tab-btn ${mode === 'wizard' ? 'active' : ''}`}
           onClick={() => setMode('wizard')}
         >
-          📝 Formulaire guidé
+          📝 Formulaire rapide 1-clic
         </button>
         <button
           type="button"
-          className={`mode-tab ${mode === 'json' ? 'active' : ''}`}
+          className={`tab-btn ${mode === 'json' ? 'active' : ''}`}
           onClick={() => setMode('json')}
         >
-          📥 Importer un JSON
+          📥 Importer un JSON IA
         </button>
       </div>
 
       <div className="wizard-card">
         {mode === 'json' ? (
-          <div className="json-import-panel slide-in">
-            <div className="json-panel-head">
+          <div className="json-import-view">
+            <div className="json-import-header">
               <div>
-                <h3>Importer une annonce via JSON</h3>
-                <p className="json-panel-desc">
-                  Glissez un fichier <code>.json</code> ou collez directement votre code ci-dessous.
+                <h3>Importer via un JSON (IA ou fichier)</h3>
+                <p>
+                  Collez le JSON généré par votre IA ou cliquez ci-dessous pour copier le prompt d'instruction IA.
                 </p>
+              </div>
+              <div className="json-action-btns">
+                <button
+                  type="button"
+                  className="btn-copy-prompt"
+                  onClick={handleCopyAiPrompt}
+                  title="Copier le prompt complet pour ChatGPT / Claude / Gemini"
+                >
+                  📋 Copier le prompt pour l'IA
+                </button>
+                <button
+                  type="button"
+                  className="btn-load-sample"
+                  onClick={handleLoadSample}
+                >
+                  📄 Charger l'exemple
+                </button>
               </div>
             </div>
 
-            <div className="json-quick-actions">
-              <label className="btn-json-action upload">
-                📂 Parcourir un fichier .json
-                <input type="file" accept=".json,application/json" onChange={handleFileUpload} style={{ display: 'none' }} />
-              </label>
-              <button type="button" className="btn-json-action" onClick={handleLoadSample}>
-                📋 Charger l'exemple complet
-              </button>
-              <button type="button" className="btn-json-action" onClick={handleDownloadTemplate}>
-                💾 Télécharger modèle .json
-              </button>
+            {/* AI Schema Guide Details */}
+            <div className="json-schema-guide">
+              <span className="guide-badge">💡 Options autorisées pour votre IA :</span>
+              <ul className="guide-list">
+                <li><b>statut</b> : <code>"appeler"</code>, <code>"visite"</code>, <code>"dossier"</code>, <code>"attente"</code>, <code>"refuse"</code>, <code>"ok"</code></li>
+                <li><b>exterieur</b> : <code>"aucun"</code>, <code>"balcon"</code>, <code>"terrasse"</code>, <code>"grande-terrasse"</code>, <code>"jardin"</code>, <code>"grand-jardin"</code></li>
+                <li><b>dpe</b> : <code>"A"</code> à <code>"G"</code> ou <code>"Non renseigné"</code></li>
+                <li><b>agenceType</b> : <code>"particulier"</code> ou <code>"agence"</code></li>
+                <li><b>ville</b> : <code>"Bordeaux"</code>, <code>"Talence"</code>, <code>"Pessac"</code>, <code>"Mérignac"</code>, <code>"Bègles"</code>, <code>"Villenave-d'Ornon"</code></li>
+              </ul>
             </div>
 
-            <div className="json-editor-wrap">
-              <textarea
-                className="json-textarea"
-                rows={12}
-                placeholder="Collez ici votre objet JSON ou tableau d'objets..."
-                value={jsonText}
-                onChange={(e) => handleJsonChange(e.target.value)}
-              />
-              {jsonStatus && (
-                <div className={`json-status-banner ${jsonStatus.valid ? 'valid' : 'invalid'}`}>
-                  {jsonStatus.msg}
-                </div>
-              )}
-            </div>
+            <textarea
+              className="json-textarea"
+              placeholder="Collez ici votre JSON..."
+              value={jsonText}
+              onChange={(e) => handleJsonChange(e.target.value)}
+              rows={8}
+            />
 
-            <div className="wizard-footer">
-              <button type="button" className="btn-ghost" onClick={() => setMode('wizard')}>
-                Retour au formulaire
-              </button>
+            {jsonStatus && (
+              <div className={`json-status-box ${jsonStatus.valid ? 'valid' : 'invalid'}`}>
+                {jsonStatus.msg}
+              </div>
+            )}
+
+            <div className="json-footer-actions">
               <button
                 type="button"
                 className="btn-primary"
+                disabled={saving || !jsonStatus?.valid}
                 onClick={handleImportJson}
-                disabled={saving || (jsonStatus && !jsonStatus.valid)}
               >
-                {saving ? '⏳ Import en cours...' : '🚀 Importer l\'annonce'}
+                {saving ? '⏳ Enregistrement...' : '🚀 Valider et Importer dans les annonces'}
               </button>
             </div>
           </div>
         ) : (
-        <form onSubmit={handleNext}>
-          {step === 1 && (
-            <div className="wizard-step slide-in">
-              <h3>🏷 Étape 1 : Identité du bien</h3>
-              <div className="fg">
-                <label>Titre de l'annonce *</label>
-                <input name="titre" type="text" placeholder="T3 45 m² proche tram B..." value={formData.titre} onChange={handleChange} required autoFocus />
-              </div>
-              <div className="frow-compact">
+          <form onSubmit={handleNext}>
+            {/* Step 1 : Identité du bien */}
+            {step === 1 && (
+              <div className="wizard-step slide-in">
+                <h3>🏷 Étape 1 : Identité & Contact</h3>
+
                 <div className="fg">
-                  <label>Statut *</label>
-                  <select name="statut" value={formData.statut} onChange={handleChange} required>
-                    <option value="appeler">📞 À appeler</option>
-                    <option value="visite">👁 Visite prévue</option>
-                    <option value="dossier">📁 Dossier en cours</option>
-                    <option value="attente">⏳ En attente</option>
-                  </select>
+                  <label>Titre de l'annonce *</label>
+                  <input
+                    name="titre"
+                    type="text"
+                    placeholder="Ex: T3 meublé 65 m² avec terrasse proche tram..."
+                    value={formData.titre}
+                    onChange={handleChange}
+                    required
+                    autoFocus
+                  />
                 </div>
+
+                {/* Statut 1-click pills */}
+                <div className="fg">
+                  <label>Statut</label>
+                  <div className="chip-selector-group">
+                    {Object.entries(STATUS).map(([key, item]) => {
+                      const isSel = formData.statut === key;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          className={`btn-chip-option ${isSel ? 'selected' : ''}`}
+                          style={
+                            isSel
+                              ? { backgroundColor: item.bg, color: item.color, borderColor: item.pin }
+                              : {}
+                          }
+                          onClick={() => handleFieldSelect('statut', key)}
+                        >
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Source 1-click pills */}
                 <div className="fg">
                   <label>Source</label>
-                  <select name="source" value={formData.source} onChange={handleChange}>
-                    <option value="">— Choisir —</option>
-                    {SOURCES.map(s => <option key={s}>{s}</option>)}
-                  </select>
+                  <div className="chip-selector-group">
+                    {SOURCES.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        className={`btn-chip-option ${formData.source === s ? 'selected' : ''}`}
+                        onClick={() => handleFieldSelect('source', s)}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              {formData.statut === 'visite' && (
-                <div className="fg highlight-field">
-                  <label>📅 Date et heure de visite prévue</label>
+
+                {formData.statut === 'visite' && (
+                  <div className="fg highlight-field">
+                    <label>📅 Date et heure de visite prévue</label>
+                    <input
+                      name="visitDate"
+                      type="datetime-local"
+                      value={formData.visitDate}
+                      onChange={handleChange}
+                    />
+                  </div>
+                )}
+
+                <div className="fg">
+                  <label>Lien web de l'annonce</label>
                   <input
-                    name="visitDate"
-                    type="datetime-local"
-                    value={formData.visitDate}
+                    name="url"
+                    type="url"
+                    placeholder="https://www.leboncoin.fr/..."
+                    value={formData.url}
                     onChange={handleChange}
                   />
                 </div>
+
+                {/* Contact Segmented Buttons */}
+                <div className="frow-compact">
+                  <div className="fg">
+                    <label>Type d'interlocuteur</label>
+                    <div className="segmented-control">
+                      <button
+                        type="button"
+                        className={formData.agenceType === 'particulier' ? 'active' : ''}
+                        onClick={() => handleFieldSelect('agenceType', 'particulier')}
+                      >
+                        👤 Particulier
+                      </button>
+                      <button
+                        type="button"
+                        className={formData.agenceType === 'agence' ? 'active' : ''}
+                        onClick={() => handleFieldSelect('agenceType', 'agence')}
+                      >
+                        🏢 Agence
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="fg">
+                    <label>Nom de l'agence ou propriétaire</label>
+                    <input
+                      name="agenceNom"
+                      type="text"
+                      placeholder="Ex: Century 21..."
+                      value={formData.agenceNom}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2 : Localisation */}
+            {step === 2 && (
+              <div className="wizard-step slide-in">
+                <h3>📍 Étape 2 : Localisation</h3>
+
+                {/* Villes 1-click pills (6 premières) */}
+                <div className="fg">
+                  <label>Ville (Sélection rapide 1-clic)</label>
+                  <div className="chip-selector-group">
+                    {CITIES.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        className={`btn-chip-option ${formData.ville === c ? 'selected' : ''}`}
+                        onClick={() => handleFieldSelect('ville', c)}
+                      >
+                        📍 {c}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className={`btn-chip-option ${formData.ville === '__autre' ? 'selected' : ''}`}
+                      onClick={() => handleFieldSelect('ville', '__autre')}
+                    >
+                      ✏️ Autre ville...
+                    </button>
+                  </div>
+                  {formData.ville === '__autre' && (
+                    <input
+                      name="villeCustom"
+                      type="text"
+                      placeholder="Saisir la ville..."
+                      value={formData.villeCustom}
+                      onChange={handleChange}
+                      style={{ marginTop: 6 }}
+                      autoFocus
+                      required
+                    />
+                  )}
+                </div>
+
+                <div className="fg" style={{ marginTop: 8 }}>
+                  <label>
+                    Adresse exacte{' '}
+                    <span style={{ fontWeight: 400, color: 'var(--text-3)' }}>(optionnelle)</span>
+                  </label>
+                  <input
+                    name="adresse"
+                    type="text"
+                    placeholder="12 rue des Lilas..."
+                    value={formData.adresse}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Step 3 : Le Bien & Contact */}
+            {step === 3 && (
+              <div className="wizard-step slide-in">
+                <h3>📐 Étape 3 : Le Bien & Métriques</h3>
+
+                <div className="frow-compact">
+                  <div className="fg">
+                    <label>Loyer (€/mois) *</label>
+                    <input
+                      name="prix"
+                      type="number"
+                      placeholder="1250"
+                      value={formData.prix}
+                      onChange={handleChange}
+                      required
+                      autoFocus
+                    />
+                  </div>
+                  <div className="fg">
+                    <label>Surface (m²)</label>
+                    <input
+                      name="surface"
+                      type="number"
+                      placeholder="68"
+                      value={formData.surface}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+
+                {/* Pièces 1-click buttons */}
+                <div className="fg">
+                  <label>Nombre de pièces</label>
+                  <div className="chip-selector-group compact">
+                    {PIECES_OPTS.map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        className={`btn-num-option ${formData.pieces === p ? 'selected' : ''}`}
+                        onClick={() => handleFieldSelect('pieces', p)}
+                      >
+                        {p} {p === '1' ? 'pièce' : 'pièces'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Chambres 1-click buttons */}
+                <div className="fg">
+                  <label>Nombre de chambres</label>
+                  <div className="chip-selector-group compact">
+                    {CHAMBRES_OPTS.map((ch) => (
+                      <button
+                        key={ch}
+                        type="button"
+                        className={`btn-num-option ${formData.chambres === ch ? 'selected' : ''}`}
+                        onClick={() => handleFieldSelect('chambres', ch)}
+                      >
+                        {ch} {ch === '1' ? 'chambre' : 'chambres'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* DPE 1-click badges */}
+                <div className="fg">
+                  <label>DPE (Classe Énergétique)</label>
+                  <div className="dpe-selector-row">
+                    {DPE_OPTS.map((l) => {
+                      const isSel = formData.dpe === l;
+                      return (
+                        <button
+                          key={l}
+                          type="button"
+                          className={`btn-dpe-badge dpe-${l} ${isSel ? 'selected' : ''}`}
+                          onClick={() => handleFieldSelect('dpe', l)}
+                        >
+                          {l}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Extérieur 1-click pills */}
+                <div className="fg">
+                  <label>Extérieur</label>
+                  <div className="chip-selector-group">
+                    {EXT_OPT.map((o) => (
+                      <button
+                        key={o.value}
+                        type="button"
+                        className={`btn-chip-option ${formData.exterieur === o.value ? 'selected' : ''}`}
+                        onClick={() => handleFieldSelect('exterieur', o.value)}
+                      >
+                        {o.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div
+                  className="frow-compact"
+                  style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border-2)' }}
+                >
+                  <div className="fg">
+                    <label>Nom interlocuteur</label>
+                    <input
+                      name="cnom"
+                      type="text"
+                      placeholder="M. Martin"
+                      value={formData.cnom}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="fg">
+                    <label>Téléphone</label>
+                    <input
+                      name="ctel"
+                      type="tel"
+                      placeholder="06 12 34 56 78"
+                      value={formData.ctel}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 4 : Photo & Avis */}
+            {step === 4 && (
+              <div className="wizard-step slide-in">
+                <h3>📷 Étape 4 : Photo & Avis</h3>
+                <PhotoUpload
+                  photo={photo}
+                  onChange={setPhotoState}
+                  onClear={() => setPhotoState('')}
+                />
+                <div className="fg" style={{ marginTop: 8 }}>
+                  <label>Notes & impressions libres</label>
+                  <textarea
+                    name="notes"
+                    placeholder="Lumineux, étage élevé, cave, double vitrage..."
+                    rows={2}
+                    value={formData.notes}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="frow-compact" style={{ marginTop: 8 }}>
+                  <StarPicker
+                    label="Note Franck 🧔"
+                    value={formData.scoreFranck}
+                    onChange={(v) => setFormData((p) => ({ ...p, scoreFranck: v }))}
+                  />
+                  <StarPicker
+                    label="Note Laura 👩"
+                    value={formData.scoreLaura}
+                    onChange={(v) => setFormData((p) => ({ ...p, scoreLaura: v }))}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="wizard-footer">
+              {step > 1 ? (
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => setStep(step - 1)}
+                >
+                  Précédent
+                </button>
+              ) : (
+                <div />
               )}
-              <div className="fg">
-                <label>Lien de l'annonce</label>
-                <input name="url" type="url" placeholder="https://..." value={formData.url} onChange={handleChange} />
-              </div>
-              <div className="frow-compact">
-                <div className="fg">
-                  <label>Contact</label>
-                  <select name="agenceType" value={formData.agenceType} onChange={handleChange}>
-                    <option value="">— Type —</option>
-                    <option value="particulier">👤 Particulier</option>
-                    <option value="agence">🏢 Agence</option>
-                  </select>
-                </div>
-                <div className="fg">
-                  <label>Nom agence / proprio</label>
-                  <input name="agenceNom" type="text" placeholder="Century 21..." value={formData.agenceNom} onChange={handleChange} />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="wizard-step slide-in">
-              <h3>📍 Étape 2 : Localisation</h3>
-              <div className="fg">
-                <label>Adresse <span style={{ fontWeight:400, color:'var(--text-3)' }}>(optionnelle)</span></label>
-                <input name="adresse" type="text" placeholder="12 rue des Lilas..." value={formData.adresse} onChange={handleChange} autoFocus />
-              </div>
-              <div className="fg">
-                <label>Ville</label>
-                <select name="ville" value={formData.ville} onChange={handleChange}>
-                  <option value="">— Choisir —</option>
-                  {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                  <option value="__autre">Autre ville…</option>
-                </select>
-                {formData.ville === '__autre' && (
-                  <input name="villeCustom" type="text" placeholder="Saisir la ville" value={formData.villeCustom} onChange={handleChange} style={{ marginTop: 6 }} required />
-                )}
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="wizard-step slide-in">
-              <h3>📐 Étape 3 : Le Bien & Contact</h3>
-              <div className="frow-compact">
-                <div className="fg">
-                  <label>Loyer (€/m)</label>
-                  <input name="prix" type="number" placeholder="1200" value={formData.prix} onChange={handleChange} autoFocus />
-                </div>
-                <div className="fg">
-                  <label>Surface (m²)</label>
-                  <input name="surface" type="number" placeholder="45" value={formData.surface} onChange={handleChange} />
-                </div>
-              </div>
-              <div className="frow-compact-3">
-                <div className="fg">
-                  <label>Pièces</label>
-                  <input name="pieces" type="number" placeholder="3" value={formData.pieces} onChange={handleChange} />
-                </div>
-                <div className="fg">
-                  <label>Chambres</label>
-                  <input name="chambres" type="number" placeholder="2" value={formData.chambres} onChange={handleChange} />
-                </div>
-                <div className="fg">
-                  <label>DPE</label>
-                  <select name="dpe" value={formData.dpe} onChange={handleChange}>
-                    <option value="">—</option>
-                    <option value="Non renseigné">Non renseig.</option>
-                    {['A','B','C','D','E','F','G'].map((l) => <option key={l}>{l}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div className="fg">
-                <label>Extérieur</label>
-                <select name="exterieur" value={formData.exterieur} onChange={handleChange}>
-                  <option value="">Aucun</option>
-                  {EXT_OPT.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-              <div className="frow-compact" style={{ marginTop: 4, paddingTop: 10, borderTop: '1px solid var(--border-2)' }}>
-                <div className="fg">
-                  <label>Contact</label>
-                  <input name="cnom" type="text" placeholder="M. Martin" value={formData.cnom} onChange={handleChange} />
-                </div>
-                <div className="fg">
-                  <label>Téléphone</label>
-                  <input name="ctel" type="tel" placeholder="06 12 34 56 78" value={formData.ctel} onChange={handleChange} />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {step === 4 && (
-            <div className="wizard-step slide-in">
-              <h3>📷 Étape 4 : Photo & Avis</h3>
-              <PhotoUpload photo={photo} onChange={setPhotoState} onClear={() => setPhotoState('')} />
-              <div className="fg" style={{ marginTop: 8 }}>
-                <label>Notes & impressions</label>
-                <textarea name="notes" placeholder="Lumineux, étage élevé, cave..." rows={2} value={formData.notes} onChange={handleChange} />
-              </div>
-              <div className="frow-compact" style={{ marginTop: 8 }}>
-                <StarPicker label="Note Franck 🧔" value={formData.scoreFranck} onChange={(v) => setFormData(p => ({...p, scoreFranck: v}))} />
-                <StarPicker label="Note Laura 👩"  value={formData.scoreLaura}  onChange={(v) => setFormData(p => ({...p, scoreLaura: v}))} />
-              </div>
-            </div>
-          )}
-
-          <div className="wizard-footer">
-            {step > 1 ? (
-              <button type="button" className="btn-ghost" onClick={() => setStep(step - 1)}>
-                Précédent
+              <button type="submit" className="btn-primary" disabled={saving}>
+                {saving
+                  ? '⏳ En cours...'
+                  : step < 4
+                  ? 'Suivant →'
+                  : '💾 Terminer et Enregistrer'}
               </button>
-            ) : <div />}
-            <button type="submit" className="btn-primary" disabled={saving}>
-              {saving ? '⏳ En cours...' : (step < 4 ? 'Suivant →' : '💾 Terminer')}
-            </button>
-          </div>
-        </form>
+            </div>
+          </form>
         )}
       </div>
     </div>

@@ -1,89 +1,129 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { STATUS, EXTERIOR, formatPrice, buildAnnonceGcalUrl, getPhoto, setPhoto, clearPhoto } from '../utils';
+import {
+  STATUS,
+  EXTERIOR,
+  formatPrice,
+  buildAnnonceGcalUrl,
+  getPhoto,
+  setPhoto,
+  clearPhoto,
+} from '../utils';
 
-function InlineEdit({ label, value, type = 'text', options, onSave, prefix = '', suffix = '', placeholder = '—' }) {
+function InlineEdit({
+  label,
+  value,
+  type = 'text',
+  options = null,
+  onSave,
+  placeholder = 'Non renseigné',
+  suffix = '',
+  compact = false,
+}) {
   const [editing, setEditing] = useState(false);
   const [val, setVal] = useState(value ?? '');
 
-  useEffect(() => { setVal(value ?? ''); }, [value]);
+  useEffect(() => {
+    setVal(value ?? '');
+  }, [value]);
 
-  const handleSave = () => {
+  const handleCommit = () => {
     setEditing(false);
-    if (val !== (value ?? '')) onSave(val);
+    if (val !== value) {
+      onSave(val);
+    }
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && type !== 'textarea') handleSave();
-    if (e.key === 'Escape') {
-      setVal(value ?? '');
+    if (e.key === 'Enter' && type !== 'textarea') {
+      handleCommit();
+    } else if (e.key === 'Escape') {
       setEditing(false);
+      setVal(value ?? '');
     }
   };
-
-  const displayVal = () => {
-    if (options) {
-      const found = options.find(o => String(o.value) === String(value));
-      return found ? found.label : (value || placeholder);
-    }
-    return value ? `${prefix}${value}${suffix}` : placeholder;
-  };
-
-  if (editing) {
-    return (
-      <div className="inline-edit-box">
-        <label className="inline-label">{label}</label>
-        {options ? (
-          <select
-            autoFocus
-            value={val}
-            onChange={(e) => setVal(e.target.value)}
-            onBlur={handleSave}
-            className="inline-input"
-          >
-            <option value="">— Non spécifié —</option>
-            {options.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        ) : type === 'textarea' ? (
-          <div className="inline-textarea-wrap">
-            <textarea
-              autoFocus
-              value={val}
-              onChange={(e) => setVal(e.target.value)}
-              onBlur={handleSave}
-              rows={4}
-              className="inline-input inline-textarea"
-            />
-            <button type="button" className="inline-save-btn" onClick={handleSave}>✓ Enregistrer</button>
-          </div>
-        ) : (
-          <input
-            autoFocus
-            type={type}
-            value={val}
-            onChange={(e) => setVal(e.target.value)}
-            onBlur={handleSave}
-            onKeyDown={handleKeyDown}
-            className="inline-input"
-          />
-        )}
-      </div>
-    );
-  }
 
   return (
-    <div className="inline-field-tile" onClick={() => setEditing(true)} title="Cliquer pour modifier">
+    <div
+      className={`inline-field-tile ${editing ? 'is-editing' : ''} ${compact ? 'is-compact' : ''}`}
+      onClick={() => !editing && setEditing(true)}
+    >
       <div className="inline-tile-head">
         <span className="inline-label">{label}</span>
-        <span className="inline-edit-indicator">✏️</span>
+        {!editing && <span className="inline-edit-indicator" title="Cliquer pour modifier">✏️</span>}
       </div>
-      <div className={`inline-tile-val ${!value ? 'empty' : ''}`}>
-        {displayVal()}
-      </div>
+
+      {editing ? (
+        <div className="inline-edit-box" onClick={(e) => e.stopPropagation()}>
+          {options ? (
+            <select
+              value={val}
+              onChange={(e) => {
+                setVal(e.target.value);
+                setEditing(false);
+                onSave(e.target.value);
+              }}
+              onBlur={() => setEditing(false)}
+              autoFocus
+              className="inline-input"
+            >
+              {options.map((opt) => {
+                const oVal = typeof opt === 'string' ? opt : opt.value;
+                const oLbl = typeof opt === 'string' ? opt : opt.label;
+                return (
+                  <option key={oVal} value={oVal}>
+                    {oLbl}
+                  </option>
+                );
+              })}
+            </select>
+          ) : type === 'textarea' ? (
+            <div className="inline-textarea-wrap">
+              <textarea
+                value={val}
+                onChange={(e) => setVal(e.target.value)}
+                onBlur={handleCommit}
+                rows={3}
+                autoFocus
+                className="inline-input inline-textarea"
+                placeholder={placeholder}
+              />
+              <button
+                type="button"
+                className="inline-save-btn"
+                onMouseDown={handleCommit}
+              >
+                ✓ Enregistrer
+              </button>
+            </div>
+          ) : (
+            <input
+              type={type}
+              value={val}
+              onChange={(e) => setVal(e.target.value)}
+              onBlur={handleCommit}
+              onKeyDown={handleKeyDown}
+              autoFocus
+              className="inline-input"
+              placeholder={placeholder}
+            />
+          )}
+        </div>
+      ) : (
+        <div className="inline-tile-val-wrap">
+          <span className={`inline-tile-val ${!value ? 'empty' : ''}`}>
+            {value !== undefined && value !== null && value !== ''
+              ? options
+                ? options.find((o) => (typeof o === 'string' ? o : o.value) === value)?.label ||
+                  (typeof value === 'string' && EXTERIOR[value]) ||
+                  value
+                : `${value}${suffix}`
+              : placeholder}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -91,51 +131,63 @@ function InlineEdit({ label, value, type = 'text', options, onSave, prefix = '',
 export default function AnnonceDetails({ onToast }) {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [annonce, setAnnonce] = useState(null);
   const [photo, setPhotoState] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getDoc(doc(db, 'annonces', id)).then((snap) => {
+    if (!id) return;
+    const unsub = onSnapshot(doc(db, 'annonces', id), (snap) => {
       if (snap.exists()) {
-        setAnnonce({ id, ...snap.data() });
-        setPhotoState(getPhoto(id) || '');
+        const data = { id: snap.id, ...snap.data() };
+        const localPhoto = getPhoto(snap.id);
+        if (localPhoto) data.photo = localPhoto;
+        setAnnonce(data);
+        setPhotoState(data.photo || '');
+      } else {
+        setAnnonce(null);
       }
       setLoading(false);
     });
+
+    return () => unsub();
   }, [id]);
 
-  const updateField = async (field, value) => {
+  const updateField = async (field, val) => {
     try {
       await updateDoc(doc(db, 'annonces', id), {
-        [field]: value,
+        [field]: val,
         updatedAt: new Date().toISOString(),
       });
-      setAnnonce((prev) => ({ ...prev, [field]: value }));
-      onToast('💾 Sauvegardé avec succès');
+      onToast('✓ Mis à jour');
     } catch (err) {
       console.error(err);
-      onToast('⚠️ Erreur lors de la sauvegarde');
+      onToast('⚠️ Erreur de mise à jour');
     }
   };
 
   const handlePhotoUpload = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
       const img = new Image();
       img.onload = () => {
-        const maxW = 1000;
-        let w = img.width, h = img.height;
-        if (w > maxW) {
-          h = Math.round((h * maxW) / w);
-          w = maxW;
+        const canvas = document.createElement('canvas');
+        const MAX = 1200;
+        let { width, height } = img;
+        if (width > height && width > MAX) {
+          height = Math.round((height * MAX) / width);
+          width = MAX;
+        } else if (height > MAX) {
+          width = Math.round((width * MAX) / height);
+          height = MAX;
         }
-        const c = document.createElement('canvas');
-        c.width = w; c.height = h;
-        c.getContext('2d').drawImage(img, 0, 0, w, h);
-        const dataUrl = c.toDataURL('image/jpeg', 0.85);
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
         setPhoto(id, dataUrl);
         setPhotoState(dataUrl);
         onToast('📷 Photo mise à jour !');
@@ -145,16 +197,58 @@ export default function AnnonceDetails({ onToast }) {
     reader.readAsDataURL(file);
   };
 
-  const handleDelete = async () => {
-    if (!confirm('Voulez-vous vraiment supprimer cette annonce ?')) return;
+  // Archive instead of delete
+  const handleArchive = async () => {
+    if (!confirm('Archiver cette annonce ? Elle sera conservée dans vos archives.')) return;
+    try {
+      await updateDoc(doc(db, 'annonces', id), {
+        archived: true,
+        archivedAt: new Date().toISOString(),
+      });
+      onToast('📦 Annonce archivée avec succès');
+      navigate('/');
+    } catch (err) {
+      console.error(err);
+      onToast('⚠️ Erreur lors de l\'archivage');
+    }
+  };
+
+  // Restore
+  const handleRestore = async () => {
+    try {
+      await updateDoc(doc(db, 'annonces', id), {
+        archived: false,
+        restoredAt: new Date().toISOString(),
+      });
+      onToast('✅ Annonce restaurée dans la liste active');
+    } catch (err) {
+      console.error(err);
+      onToast('⚠️ Erreur lors de la restauration');
+    }
+  };
+
+  // Permanent Delete
+  const handlePermanentDelete = async () => {
+    if (!confirm('Supprimer DÉFINITIVEMENT cette annonce ? Cette action est irréversible.')) return;
     try {
       await deleteDoc(doc(db, 'annonces', id));
       clearPhoto(id);
-      onToast('🗑 Annonce supprimée');
+      onToast('🗑 Annonce supprimée définitivement');
       navigate('/');
     } catch (err) {
       console.error(err);
       onToast('⚠️ Erreur lors de la suppression');
+    }
+  };
+
+  // Cancel Visit
+  const handleCancelVisit = async () => {
+    try {
+      await updateDoc(doc(db, 'annonces', id), { visitDate: null });
+      onToast('✕ Rendez-vous de visite annulé');
+    } catch (err) {
+      console.error(err);
+      onToast('⚠️ Erreur lors de l\'annulation');
     }
   };
 
@@ -225,15 +319,41 @@ export default function AnnonceDetails({ onToast }) {
               🔗 Source
             </a>
           )}
-          <button type="button" className="btn-delete-top" onClick={handleDelete} title="Supprimer l'annonce">
-            🗑
-          </button>
+          {annonce.archived ? (
+            <>
+              <button
+                type="button"
+                className="btn-restore-top"
+                onClick={handleRestore}
+                title="Restaurer l'annonce"
+              >
+                ↩ Restaurer
+              </button>
+              <button
+                type="button"
+                className="btn-delete-top"
+                onClick={handlePermanentDelete}
+                title="Supprimer définitivement"
+              >
+                🗑
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="btn-archive-top"
+              onClick={handleArchive}
+              title="Archiver l'annonce"
+            >
+              📦 Archiver
+            </button>
+          )}
         </div>
       </div>
 
       {/* Main Grid */}
       <div className="details-grid-main">
-        {/* Left Column : Showcase, Visit Card, Notes */}
+        {/* Left Column : Media, Visit, Evaluations */}
         <div className="details-col-main">
           {/* Hero Media Card */}
           <div className="details-hero-card">
@@ -288,51 +408,68 @@ export default function AnnonceDetails({ onToast }) {
             </div>
           </div>
 
-          {/* VISIT CARD (PRO GOOGLE CALENDAR) */}
+          {/* VISIT CARD */}
           <div className="details-section-card visit-feature-card">
             <div className="section-card-header">
               <div className="sec-title-with-icon">
                 <span className="sec-icon">📅</span>
-                <div>
-                  <h3>Visite & Agenda Google</h3>
-                  <p className="sec-subtitle">Programmez la visite et synchronisez en 1 clic dans Google Agenda</p>
-                </div>
+                <h3>Visite & Agenda Google</h3>
               </div>
-              {gcalHref && (
-                <a
-                  href={gcalHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-gcal-large"
-                  title="Ouvre Google Agenda avec l'adresse, l'agent, le téléphone et le lien vers cette fiche"
-                >
-                  📅 Ajouter à Google Agenda
-                </a>
-              )}
+              <div className="visit-header-actions">
+                {isVisitValid && (
+                  <button
+                    type="button"
+                    className="btn-cancel-visit-sheet"
+                    onClick={handleCancelVisit}
+                    title="Supprimer / Annuler le rendez-vous"
+                  >
+                    ✕ Annuler RDV
+                  </button>
+                )}
+                {gcalHref && (
+                  <a
+                    href={gcalHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-gcal-large"
+                    title="Ajouter à Google Agenda"
+                  >
+                    📅 Google Agenda
+                  </a>
+                )}
+              </div>
             </div>
 
             <div className="visit-fields-grid">
-              <InlineEdit
-                label="Date et heure de visite"
-                value={annonce.visitDate}
-                type="datetime-local"
-                onSave={(v) => {
-                  updateField('visitDate', v);
-                  if (v && (!annonce.statut || annonce.statut === 'appeler')) {
-                    updateField('statut', 'visite');
-                  }
-                }}
-                placeholder="Cliquer pour fixer une date de visite"
-              />
-              {isVisitValid && (
+              {isVisitValid ? (
                 <div className="visit-summary-box">
-                  <span className="vs-badge">✓ Visite confirmée</span>
+                  <span className="vs-badge">✓ Visite programmée</span>
                   <div className="vs-details">
-                    <b>{visitDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</b>
+                    <b>{visitDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</b>
                     &nbsp;à&nbsp;
                     <b>{visitDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</b>
                   </div>
+                  <InlineEdit
+                    label="Modifier date"
+                    value={annonce.visitDate}
+                    type="datetime-local"
+                    onSave={(v) => updateField('visitDate', v)}
+                    compact
+                  />
                 </div>
+              ) : (
+                <InlineEdit
+                  label="Date et heure de visite"
+                  value={annonce.visitDate}
+                  type="datetime-local"
+                  onSave={(v) => {
+                    updateField('visitDate', v);
+                    if (v && (!annonce.statut || annonce.statut === 'appeler')) {
+                      updateField('statut', 'visite');
+                    }
+                  }}
+                  placeholder="Cliquer pour fixer une date de visite"
+                />
               )}
             </div>
           </div>
@@ -353,7 +490,7 @@ export default function AnnonceDetails({ onToast }) {
                   <span className="eval-name">Franck</span>
                 </div>
                 <InlineEdit
-                  label="Note Franck (/10)"
+                  label="Note (/10)"
                   value={annonce.scoreFranck}
                   type="number"
                   suffix=" / 10"
@@ -367,7 +504,7 @@ export default function AnnonceDetails({ onToast }) {
                   <span className="eval-name">Laura</span>
                 </div>
                 <InlineEdit
-                  label="Note Laura (/10)"
+                  label="Note (/10)"
                   value={annonce.scoreLaura}
                   type="number"
                   suffix=" / 10"
@@ -376,7 +513,7 @@ export default function AnnonceDetails({ onToast }) {
               </div>
             </div>
 
-            <div style={{ marginTop: '16px' }}>
+            <div style={{ marginTop: '8px' }}>
               <InlineEdit
                 label="Notes & Impressions libres"
                 value={annonce.notes}
@@ -388,9 +525,9 @@ export default function AnnonceDetails({ onToast }) {
           </div>
         </div>
 
-        {/* Right Column : Specs & Contact Details */}
+        {/* Right Column : Compact Specs & Contact Details */}
         <div className="details-col-side">
-          {/* Card Caractéristiques */}
+          {/* Card Caractéristiques : Compact 2x3 Grid */}
           <div className="details-section-card">
             <div className="section-card-header">
               <div className="sec-title-with-icon">
@@ -399,7 +536,7 @@ export default function AnnonceDetails({ onToast }) {
               </div>
             </div>
 
-            <div className="specs-grid-tiles">
+            <div className="specs-grid-tiles-compact">
               <InlineEdit
                 label="Surface"
                 value={annonce.surface}
@@ -411,7 +548,7 @@ export default function AnnonceDetails({ onToast }) {
                 label="Pièces"
                 value={annonce.pieces}
                 type="number"
-                suffix=" pièces"
+                suffix=" p."
                 onSave={(v) => updateField('pieces', v)}
               />
               <InlineEdit
@@ -430,32 +567,26 @@ export default function AnnonceDetails({ onToast }) {
                 ]}
                 onSave={(v) => updateField('dpe', v)}
               />
-            </div>
-
-            <div style={{ marginTop: '16px' }}>
               <InlineEdit
                 label="Extérieur"
                 value={annonce.exterieur}
                 options={[
-                  { value: '', label: 'Aucun extérieur' },
+                  { value: '', label: 'Aucun' },
                   ...Object.entries(EXTERIOR).map(([k, v]) => ({ value: k, label: v })),
                 ]}
                 onSave={(v) => updateField('exterieur', v)}
               />
-            </div>
-
-            <div style={{ marginTop: '16px' }}>
               <InlineEdit
-                label="Source du bien"
+                label="Source"
                 value={annonce.source}
                 options={[
-                  'Le Bon Coin', 'Jinka', 'SeLoger', 'Bien\'ici', 'PAP', 'Logic-Immo', 'Autre',
+                  'Le Bon Coin', 'Jinka', 'SeLoger', 'Bien\'ici', 'PAP', 'Autre',
                 ].map((s) => ({ value: s, label: s }))}
                 onSave={(v) => updateField('source', v)}
               />
             </div>
 
-            <div style={{ marginTop: '16px' }}>
+            <div style={{ marginTop: '8px' }}>
               <InlineEdit
                 label="Lien web de l'annonce"
                 value={annonce.url}
@@ -466,7 +597,7 @@ export default function AnnonceDetails({ onToast }) {
             </div>
           </div>
 
-          {/* Card Contact & Agence */}
+          {/* Card Contact & Interlocuteur */}
           <div className="details-section-card">
             <div className="section-card-header">
               <div className="sec-title-with-icon">
@@ -500,7 +631,7 @@ export default function AnnonceDetails({ onToast }) {
 
               <div className="agency-subgrid">
                 <InlineEdit
-                  label="Type de contact"
+                  label="Type"
                   value={annonce.agenceType}
                   options={[
                     { value: 'agence', label: '🏢 Agence' },
@@ -512,7 +643,7 @@ export default function AnnonceDetails({ onToast }) {
                   label="Nom de l'agence"
                   value={annonce.agenceNom}
                   onSave={(v) => updateField('agenceNom', v)}
-                  placeholder="Ex: Stéphane Plaza Immobilier"
+                  placeholder="Ex: Century 21..."
                 />
               </div>
             </div>

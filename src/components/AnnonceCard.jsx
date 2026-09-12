@@ -19,17 +19,58 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
     }
   }
 
-  async function handleDelete(e) {
+  async function handleArchive(e) {
     e.stopPropagation();
-    if (!confirm('Supprimer cette annonce ?')) return;
+    if (!confirm('Archiver cette annonce ? Elle sera conservée dans l\'onglet Archives.')) return;
+    try {
+      await updateDoc(doc(db, 'annonces', annonce.id), {
+        archived: true,
+        archivedAt: new Date().toISOString(),
+      });
+      onToast('📦 Annonce archivée');
+      if (onDelete) onDelete(annonce.id);
+    } catch (err) {
+      console.error(err);
+      onToast('⚠️ Erreur lors de l\'archivage');
+    }
+  }
+
+  async function handleRestore(e) {
+    e.stopPropagation();
+    try {
+      await updateDoc(doc(db, 'annonces', annonce.id), {
+        archived: false,
+        restoredAt: new Date().toISOString(),
+      });
+      onToast('✅ Annonce restaurée');
+    } catch (err) {
+      console.error(err);
+      onToast('⚠️ Erreur lors de la restauration');
+    }
+  }
+
+  async function handlePermanentDelete(e) {
+    e.stopPropagation();
+    if (!confirm('Supprimer DÉFINITIVEMENT cette annonce ?')) return;
     try {
       await deleteDoc(doc(db, 'annonces', annonce.id));
       clearPhoto(annonce.id);
-      onToast('🗑 Annonce supprimée');
+      onToast('🗑 Annonce supprimée définitivement');
       if (onDelete) onDelete(annonce.id);
     } catch (err) {
       console.error(err);
       onToast('⚠️ Erreur lors de la suppression');
+    }
+  }
+
+  async function handleCancelVisit(e) {
+    e.stopPropagation();
+    try {
+      await updateDoc(doc(db, 'annonces', annonce.id), { visitDate: null });
+      onToast('✕ Rendez-vous de visite annulé');
+    } catch (err) {
+      console.error(err);
+      onToast('⚠️ Erreur lors de l\'annulation');
     }
   }
 
@@ -239,6 +280,14 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
                 >
                   ✏️
                 </button>
+                <button
+                  type="button"
+                  className="btn-visit-cancel-direct"
+                  onClick={handleCancelVisit}
+                  title="Supprimer / Annuler le rendez-vous de visite"
+                >
+                  ✕
+                </button>
               </div>
             </div>
           ) : (
@@ -296,14 +345,35 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
           >
             Fiche ➜
           </button>
-          <button
-            type="button"
-            className="card-action-btn danger"
-            onClick={handleDelete}
-            title="Supprimer l'annonce"
-          >
-            🗑
-          </button>
+          {annonce.archived ? (
+            <>
+              <button
+                type="button"
+                className="card-action-btn restore"
+                onClick={handleRestore}
+                title="Restaurer l'annonce dans la liste active"
+              >
+                ↩
+              </button>
+              <button
+                type="button"
+                className="card-action-btn danger"
+                onClick={handlePermanentDelete}
+                title="Supprimer définitivement"
+              >
+                🗑
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="card-action-btn danger"
+              onClick={handleArchive}
+              title="Archiver l'annonce"
+            >
+              📦
+            </button>
+          )}
         </div>
       </div>
     </article>

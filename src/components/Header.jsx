@@ -21,6 +21,9 @@ export default function Header({ view, setView, syncState, onAdd }) {
           <button className={view === 'grid' ? 'active' : ''} onClick={() => setView('grid')} title="Vue grille">
             <span>⊞</span><span className="toggle-lbl">Grille</span>
           </button>
+          <button className={view === 'list' ? 'active' : ''} onClick={() => setView('list')} title="Vue en lignes">
+            <span>☰</span><span className="toggle-lbl">Lignes</span>
+          </button>
           <button className={view === 'map' ? 'active' : ''} onClick={() => setView('map')} title="Vue carte">
             <span>📍</span><span className="toggle-lbl">Carte</span>
           </button>

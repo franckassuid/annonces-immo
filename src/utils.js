@@ -16,10 +16,40 @@ export const EXTERIOR = {
 };
 
 export const CITIES = [
-  'Bordeaux', 'Talence', 'Pessac', 'Mérignac', 'Bègles',
-  "Villenave-d'Ornon", 'Gradignan', 'Le Bouscat',
-  'Floirac', 'Cenon', 'Lormont',
+  'Bordeaux', 'Talence', 'Pessac', 'Mérignac', 'Bègles', "Villenave-d'Ornon"
 ];
+
+export const CITY_COORDS = {
+  'bordeaux': { lat: 44.8378, lng: -0.5792 },
+  'talence': { lat: 44.8000, lng: -0.5833 },
+  'pessac': { lat: 44.8067, lng: -0.6311 },
+  'mérignac': { lat: 44.8386, lng: -0.6436 },
+  'merignac': { lat: 44.8386, lng: -0.6436 },
+  'bègles': { lat: 44.8080, lng: -0.5487 },
+  'begles': { lat: 44.8080, lng: -0.5487 },
+  "villenave-d'ornon": { lat: 44.7797, lng: -0.5564 },
+  'villenave d ornon': { lat: 44.7797, lng: -0.5564 },
+  'eysines': { lat: 44.8825, lng: -0.6506 },
+  'le bouscat': { lat: 44.8647, lng: -0.5997 },
+  'gradignan': { lat: 44.7725, lng: -0.6167 },
+};
+
+export function getAnnonceCoords(annonce) {
+  if (annonce.lat && annonce.lng) {
+    return { lat: +annonce.lat, lng: +annonce.lng };
+  }
+  const v = (annonce.ville || '').trim().toLowerCase();
+  if (v && CITY_COORDS[v]) {
+    const seed = ((annonce.id || 'a').charCodeAt(0) || 1) % 10;
+    const jitterLat = (seed - 5) * 0.003;
+    const jitterLng = ((seed * 3) % 10 - 5) * 0.003;
+    return {
+      lat: CITY_COORDS[v].lat + jitterLat,
+      lng: CITY_COORDS[v].lng + jitterLng,
+    };
+  }
+  return null;
+}
 
 export function formatPrice(n) {
   return Number(n).toLocaleString('fr-FR');

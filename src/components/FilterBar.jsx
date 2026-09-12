@@ -13,6 +13,9 @@ export default function FilterBar({
   setSelectedDpes,
   showFav,
   toggleFav,
+  showArchived,
+  toggleArchived,
+  archivedCount = 0,
   sortBy,
   setSortBy,
   count,
@@ -80,6 +83,16 @@ export default function FilterBar({
           onClick={toggleFav}
         >
           ⭐ Favoris
+        </button>
+
+        {/* Archives Quick Toggle */}
+        <button
+          type="button"
+          className={`chip archive-chip${showArchived ? ' active' : ''}`}
+          onClick={toggleArchived}
+          title={showArchived ? 'Afficher les annonces actives' : 'Afficher les annonces archivées'}
+        >
+          📦 Archives {archivedCount > 0 ? `(${archivedCount})` : ''}
         </button>
 
         <div className="filter-sep" />
@@ -160,6 +173,7 @@ export default function FilterBar({
 
         <span className="count-tag">
           {count} {count <= 1 ? 'annonce' : 'annonces'}
+          {showArchived ? ' (archivées)' : ''}
         </span>
       </div>
     </div>
