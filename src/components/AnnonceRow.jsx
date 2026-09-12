@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { STATUS, EXTERIOR, formatPrice, buildAnnonceGcalUrl, clearPhoto } from '../utils';
+import { PlatformBadge } from './PlatformLogo';
 
 export default function AnnonceRow({ annonce, onClick, onToast, isArchived }) {
   const [editingVisit, setEditingVisit] = useState(false);
@@ -16,7 +17,7 @@ export default function AnnonceRow({ annonce, onClick, onToast, isArchived }) {
     e.stopPropagation();
     try {
       await updateDoc(doc(db, 'annonces', annonce.id), { fav: !annonce.fav });
-      onToast(annonce.fav ? 'Retiré des favoris' : '⭐ Ajouté aux favoris');
+      onToast(annonce.fav ? 'Retiré des favoris' : 'Ajouté aux favoris');
     } catch (err) {
       console.error(err);
     }
@@ -31,14 +32,14 @@ export default function AnnonceRow({ annonce, onClick, onToast, isArchived }) {
         archived: true,
         archivedAt: new Date().toISOString(),
       });
-      onToast('📦 Annonce déplacée dans les archives');
+      onToast('Annonce déplacée dans les archives');
     } catch (err) {
       console.error(err);
-      onToast('⚠️ Erreur lors de l\'archivage');
+      onToast('Erreur lors de l\'archivage');
     }
   }
 
-  // Restore archived
+  // Restore
   async function handleRestore(e) {
     e.stopPropagation();
     try {
@@ -46,36 +47,39 @@ export default function AnnonceRow({ annonce, onClick, onToast, isArchived }) {
         archived: false,
         restoredAt: new Date().toISOString(),
       });
-      onToast('✅ Annonce restaurée dans la liste active');
+      onToast('Annonce restaurée');
     } catch (err) {
       console.error(err);
-      onToast('⚠️ Erreur lors de la restauration');
+      onToast('Erreur lors de la restauration');
     }
   }
 
-  // Permanent delete
+  // Permanent Delete
   async function handlePermanentDelete(e) {
     e.stopPropagation();
     if (!confirm('Supprimer DÉFINITIVEMENT cette annonce ? Cette action est irréversible.')) return;
     try {
       await deleteDoc(doc(db, 'annonces', annonce.id));
       clearPhoto(annonce.id);
-      onToast('🗑 Annonce supprimée définitivement');
+      onToast('Annonce supprimée définitivement');
     } catch (err) {
       console.error(err);
-      onToast('⚠️ Erreur lors de la suppression');
+      onToast('Erreur lors de la suppression');
     }
   }
 
-  // Cancel visit
+  // Cancel Visit
   async function handleCancelVisit(e) {
     e.stopPropagation();
     try {
-      await updateDoc(doc(db, 'annonces', annonce.id), { visitDate: null });
-      onToast('✕ Rendez-vous de visite annulé');
+      await updateDoc(doc(db, 'annonces', annonce.id), {
+        visitDate: null,
+        statut: annonce.statut === 'visite' ? 'appeler' : annonce.statut,
+      });
+      onToast('Rendez-vous de visite annulé');
     } catch (err) {
       console.error(err);
-      onToast('⚠️ Erreur lors de l\'annulation');
+      onToast('Erreur lors de l\'annulation');
     }
   }
 
@@ -88,7 +92,7 @@ export default function AnnonceRow({ annonce, onClick, onToast, isArchived }) {
         statut: tempVisit ? 'visite' : (annonce.statut === 'visite' ? 'appeler' : annonce.statut),
       });
       setEditingVisit(false);
-      onToast(tempVisit ? '📅 Date de visite enregistrée !' : 'Date de visite supprimée');
+      onToast(tempVisit ? 'Date de visite enregistrée !' : 'Date de visite supprimée');
     } catch (err) {
       console.error(err);
     }
@@ -101,12 +105,18 @@ export default function AnnonceRow({ annonce, onClick, onToast, isArchived }) {
         {annonce.photo ? (
           <img src={annonce.photo} alt={annonce.titre} className="row-img" />
         ) : (
-          <div className="row-img-placeholder">🏡</div>
+          <div className="row-img-placeholder">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-3)' }}>
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          </div>
         )}
         <span
           className="row-status-pill"
           style={{ background: s.bg, color: s.color, borderColor: s.color + '44' }}
         >
+          <span className="status-dot" style={{ backgroundColor: s.dot || s.color }} />
           {s.label}
         </span>
       </div>
@@ -114,9 +124,15 @@ export default function AnnonceRow({ annonce, onClick, onToast, isArchived }) {
       {/* Main Info */}
       <div className="row-content">
         <div className="row-header-line">
-          <span className="row-city-badge">📍 {annonce.ville || 'Gironde'}</span>
-          {annonce.source && <span className="row-source-badge">{annonce.source}</span>}
-          {annonce.fav && <span className="row-fav-star" title="Favori">⭐</span>}
+          <span className="row-city-badge">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 3, verticalAlign: '-1px' }}>
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            {annonce.ville || 'Gironde'}
+          </span>
+          {annonce.source && <PlatformBadge source={annonce.source} />}
+          {annonce.fav && <span className="row-fav-star" title="Favori">★</span>}
         </div>
 
         <h3 className="row-title" title={annonce.titre}>
@@ -130,9 +146,9 @@ export default function AnnonceRow({ annonce, onClick, onToast, isArchived }) {
               {formatPrice(annonce.prix)} € <small>/mois</small>
             </span>
           )}
-          {annonce.surface && <span className="row-pill">📐 {annonce.surface} m²</span>}
-          {annonce.pieces && <span className="row-pill">🚪 {annonce.pieces} p.</span>}
-          {annonce.chambres && <span className="row-pill">🛏 {annonce.chambres} ch.</span>}
+          {annonce.surface && <span className="row-pill">{annonce.surface} m²</span>}
+          {annonce.pieces && <span className="row-pill">{annonce.pieces} p.</span>}
+          {annonce.chambres && <span className="row-pill">{annonce.chambres} ch.</span>}
           {annonce.dpe && annonce.dpe !== 'Non renseigné' && (
             <span className={`dpe-badge dpe-${annonce.dpe}`} title={`Classe ${annonce.dpe}`}>
               {annonce.dpe}
@@ -164,7 +180,14 @@ export default function AnnonceRow({ annonce, onClick, onToast, isArchived }) {
         ) : isVisitValid ? (
           <div className="row-visit-scheduled">
             <div className="row-visit-info">
-              <span className="row-visit-icon">📅</span>
+              <span className="row-visit-icon">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+              </span>
               <div>
                 <div className="row-visit-date">
                   {visitDate.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}{' '}
@@ -211,7 +234,6 @@ export default function AnnonceRow({ annonce, onClick, onToast, isArchived }) {
       {(annonce.cnom || annonce.ctel || annonce.agenceNom) && (
         <div className="row-contact-col">
           <span className="row-contact-name" title={annonce.cnom || annonce.agenceNom}>
-            {annonce.agenceType === 'particulier' ? '👤 ' : '🏢 '}
             {annonce.cnom || annonce.agenceNom || 'Contact'}
           </span>
           {annonce.ctel && (
@@ -221,7 +243,10 @@ export default function AnnonceRow({ annonce, onClick, onToast, isArchived }) {
               onClick={(e) => e.stopPropagation()}
               title={`Appeler ${annonce.ctel}`}
             >
-              📞 <span>{annonce.ctel}</span>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 3 }}>
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+              </svg>
+              <span>{annonce.ctel}</span>
             </a>
           )}
         </div>
@@ -235,7 +260,7 @@ export default function AnnonceRow({ annonce, onClick, onToast, isArchived }) {
           onClick={handleToggleFav}
           title={annonce.fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
         >
-          {annonce.fav ? '⭐' : '☆'}
+          {annonce.fav ? '★' : '☆'}
         </button>
 
         {annonce.url && (
@@ -246,7 +271,11 @@ export default function AnnonceRow({ annonce, onClick, onToast, isArchived }) {
             className="row-action-btn"
             title="Ouvrir le lien de l'annonce"
           >
-            🔗
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
           </a>
         )}
 
@@ -267,7 +296,7 @@ export default function AnnonceRow({ annonce, onClick, onToast, isArchived }) {
               onClick={handleRestore}
               title="Restaurer l'annonce"
             >
-              ↩ Restaurer
+              Restaurer
             </button>
             <button
               type="button"
@@ -275,7 +304,10 @@ export default function AnnonceRow({ annonce, onClick, onToast, isArchived }) {
               onClick={handlePermanentDelete}
               title="Supprimer définitivement"
             >
-              🗑
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
             </button>
           </>
         ) : (
@@ -285,7 +317,11 @@ export default function AnnonceRow({ annonce, onClick, onToast, isArchived }) {
             onClick={handleArchive}
             title="Archiver l'annonce"
           >
-            📦
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="21 8 21 21 3 21 3 8" />
+              <rect x="1" y="3" width="22" height="5" />
+              <line x1="10" y1="12" x2="14" y2="12" />
+            </svg>
           </button>
         )}
       </div>

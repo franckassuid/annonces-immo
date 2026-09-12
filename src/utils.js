@@ -1,18 +1,18 @@
 export const STATUS = {
-  appeler: { label: '📞 À appeler',        color: '#b45309', bg: '#fef3c7', pin: '#f59e0b' },
-  visite:  { label: '👁 Visite prévue',    color: '#1e40af', bg: '#dbeafe', pin: '#3b82f6' },
-  dossier: { label: '📁 Dossier en cours', color: '#5b21b6', bg: '#ede9fe', pin: '#7c3aed' },
-  attente: { label: '⏳ En attente',        color: '#374151', bg: '#f3f4f6', pin: '#9ca3af' },
-  refuse:  { label: '❌ Refusé',            color: '#991b1b', bg: '#fee2e2', pin: '#ef4444' },
-  ok:      { label: '✅ Accepté',           color: '#065f46', bg: '#d1fae5', pin: '#10b981' },
+  appeler: { label: 'À appeler',        color: '#b45309', bg: '#fef3c7', pin: '#f59e0b', dot: '#d97706' },
+  visite:  { label: 'Visite prévue',    color: '#1e40af', bg: '#dbeafe', pin: '#3b82f6', dot: '#2563eb' },
+  dossier: { label: 'Dossier en cours', color: '#5b21b6', bg: '#ede9fe', pin: '#7c3aed', dot: '#7c3aed' },
+  attente: { label: 'En attente',        color: '#374151', bg: '#f3f4f6', pin: '#9ca3af', dot: '#6b7280' },
+  refuse:  { label: 'Refusé',            color: '#991b1b', bg: '#fee2e2', pin: '#ef4444', dot: '#dc2626' },
+  ok:      { label: 'Accepté',           color: '#065f46', bg: '#d1fae5', pin: '#10b981', dot: '#059669' },
 };
 
 export const EXTERIOR = {
-  balcon:           '🪟 Balcon',
-  terrasse:         '☀️ Terrasse',
-  'grande-terrasse':'🌅 Grande terrasse',
-  jardin:           '🌿 Jardin',
-  'grand-jardin':   '🌳 Grand jardin',
+  balcon:           'Balcon',
+  terrasse:         'Terrasse',
+  'grande-terrasse':'Grande terrasse',
+  jardin:           'Jardin',
+  'grand-jardin':   'Grand jardin',
 };
 
 export const CITIES = [

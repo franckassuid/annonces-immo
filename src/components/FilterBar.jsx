@@ -55,7 +55,7 @@ export default function FilterBar({
       value: key,
       label,
     }));
-    list.push({ value: 'none', label: '🚫 Sans extérieur' });
+    list.push({ value: 'none', label: 'Sans extérieur' });
     return list;
   }, []);
 
@@ -82,7 +82,7 @@ export default function FilterBar({
           className={`chip fav${showFav ? ' active' : ''}`}
           onClick={toggleFav}
         >
-          ⭐ Favoris
+          ★ Favoris
         </button>
 
         {/* Archives Quick Toggle */}
@@ -92,7 +92,12 @@ export default function FilterBar({
           onClick={toggleArchived}
           title={showArchived ? 'Afficher les annonces actives' : 'Afficher les annonces archivées'}
         >
-          📦 Archives {archivedCount > 0 ? `(${archivedCount})` : ''}
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 5, verticalAlign: '-1px' }}>
+            <polyline points="21 8 21 21 3 21 3 8" />
+            <rect x="1" y="3" width="22" height="5" />
+            <line x1="10" y1="12" x2="14" y2="12" />
+          </svg>
+          Archives {archivedCount > 0 ? `(${archivedCount})` : ''}
         </button>
 
         <div className="filter-sep" />
@@ -100,7 +105,12 @@ export default function FilterBar({
         {/* Statuts Multi-select */}
         <FilterDropdown
           label="Statut"
-          icon="🏷"
+          icon={
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+              <line x1="7" y1="7" x2="7.01" y2="7" />
+            </svg>
+          }
           options={statusOptions}
           selected={selectedStatuses}
           onChange={setSelectedStatuses}
@@ -112,7 +122,12 @@ export default function FilterBar({
         {/* Villes Multi-select */}
         <FilterDropdown
           label="Ville"
-          icon="📍"
+          icon={
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+          }
           options={cityOptions}
           selected={selectedCities}
           onChange={setSelectedCities}
@@ -124,7 +139,13 @@ export default function FilterBar({
         {/* Extérieur Multi-select */}
         <FilterDropdown
           label="Extérieur"
-          icon="☀️"
+          icon={
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="23" />
+            </svg>
+          }
           options={exteriorOptions}
           selected={selectedExteriors}
           onChange={setSelectedExteriors}
@@ -136,7 +157,11 @@ export default function FilterBar({
         {/* DPE Multi-select */}
         <FilterDropdown
           label="DPE"
-          icon="⚡"
+          icon={
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+          }
           options={dpeOptions}
           selected={selectedDpes}
           onChange={setSelectedDpes}

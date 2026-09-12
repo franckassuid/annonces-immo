@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { STATUS, EXTERIOR, formatPrice, buildAnnonceGcalUrl, clearPhoto } from '../utils';
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { PlatformBadge } from './PlatformLogo';
 
 export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
   const [editingVisit, setEditingVisit] = useState(false);
@@ -13,7 +14,7 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
     e.stopPropagation();
     try {
       await updateDoc(doc(db, 'annonces', annonce.id), { fav: !annonce.fav });
-      onToast(annonce.fav ? 'Retiré des favoris' : '⭐ Ajouté aux favoris');
+      onToast(annonce.fav ? 'Retiré des favoris' : 'Ajouté aux favoris');
     } catch (err) {
       console.error(err);
     }
@@ -27,11 +28,11 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
         archived: true,
         archivedAt: new Date().toISOString(),
       });
-      onToast('📦 Annonce archivée');
+      onToast('Annonce archivée');
       if (onDelete) onDelete(annonce.id);
     } catch (err) {
       console.error(err);
-      onToast('⚠️ Erreur lors de l\'archivage');
+      onToast('Erreur lors de l\'archivage');
     }
   }
 
@@ -42,54 +43,54 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
         archived: false,
         restoredAt: new Date().toISOString(),
       });
-      onToast('✅ Annonce restaurée');
+      onToast('Annonce restaurée');
+      if (onDelete) onDelete(annonce.id);
     } catch (err) {
       console.error(err);
-      onToast('⚠️ Erreur lors de la restauration');
+      onToast('Erreur lors de la restauration');
     }
   }
 
   async function handlePermanentDelete(e) {
     e.stopPropagation();
-    if (!confirm('Supprimer DÉFINITIVEMENT cette annonce ?')) return;
+    if (!confirm('Supprimer DÉFINITIVEMENT cette annonce ? Cette action est irréversible.')) return;
     try {
       await deleteDoc(doc(db, 'annonces', annonce.id));
       clearPhoto(annonce.id);
-      onToast('🗑 Annonce supprimée définitivement');
+      onToast('Annonce supprimée définitivement');
       if (onDelete) onDelete(annonce.id);
     } catch (err) {
       console.error(err);
-      onToast('⚠️ Erreur lors de la suppression');
+      onToast('Erreur lors de la suppression');
     }
   }
 
   async function handleCancelVisit(e) {
     e.stopPropagation();
     try {
-      await updateDoc(doc(db, 'annonces', annonce.id), { visitDate: null });
-      onToast('✕ Rendez-vous de visite annulé');
+      await updateDoc(doc(db, 'annonces', annonce.id), {
+        visitDate: null,
+        statut: annonce.statut === 'visite' ? 'appeler' : annonce.statut,
+      });
+      onToast('Rendez-vous de visite annulé');
     } catch (err) {
       console.error(err);
-      onToast('⚠️ Erreur lors de l\'annulation');
+      onToast('Erreur lors de l\'annulation');
     }
   }
 
   async function handleSaveVisit(e) {
     e.stopPropagation();
     try {
-      const updates = {
+      await updateDoc(doc(db, 'annonces', annonce.id), {
         visitDate: tempVisit || null,
-        updatedAt: new Date().toISOString(),
-      };
-      if (tempVisit && (!annonce.statut || annonce.statut === 'appeler')) {
-        updates.statut = 'visite';
-      }
-      await updateDoc(doc(db, 'annonces', annonce.id), updates);
+        statut: tempVisit ? 'visite' : (annonce.statut === 'visite' ? 'appeler' : annonce.statut),
+      });
       setEditingVisit(false);
-      onToast(tempVisit ? '📅 Date de visite enregistrée !' : 'Date de visite supprimée');
+      onToast(tempVisit ? 'Date de visite enregistrée !' : 'Date de visite supprimée');
     } catch (err) {
       console.error(err);
-      onToast('⚠️ Erreur lors de l\'enregistrement');
+      onToast('Erreur lors de l\'enregistrement');
     }
   }
 
@@ -98,7 +99,10 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
   const gcalHref = isVisitValid ? buildAnnonceGcalUrl(annonce) : null;
 
   const dateStr = annonce.createdAt
-    ? new Date(annonce.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
+    ? new Date(annonce.createdAt).toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'short',
+      })
     : '';
 
   return (
@@ -109,7 +113,10 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
           <img className="card-photo" src={annonce.photo} alt={annonce.titre || 'Photo du bien'} loading="lazy" />
         ) : (
           <div className="card-photo-placeholder">
-            <span className="placeholder-icon">🏡</span>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-3)' }}>
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
           </div>
         )}
 
@@ -117,6 +124,7 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
           className="card-status-badge"
           style={{ backgroundColor: s.bg, color: s.color, borderColor: s.pin }}
         >
+          <span className="status-dot" style={{ backgroundColor: s.dot || s.color }} />
           {s.label}
         </span>
 
@@ -134,10 +142,14 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
       <div className="card-body">
         <div className="card-location-row">
           <span className="card-city-pill">
-            📍 {annonce.ville || 'Ville'}
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 3, verticalAlign: '-1px' }}>
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            {annonce.ville || 'Gironde'}
           </span>
           {annonce.source && (
-            <span className="card-source-tag">{annonce.source}</span>
+            <PlatformBadge source={annonce.source} />
           )}
         </div>
 
@@ -158,93 +170,75 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
           </div>
         </div>
 
-        {/* Specs Pills */}
-        <div className="card-meta">
+        {/* Specs */}
+        <div className="card-specs-row">
           {annonce.surface && (
-            <span className="mpill" title="Surface habitable">
-              📐 <b>{annonce.surface} m²</b>
-            </span>
+            <span className="card-spec-item">{annonce.surface} m²</span>
           )}
           {annonce.pieces && (
-            <span className="mpill" title="Nombre de pièces">
-              🚪 <b>{annonce.pieces} p.</b>
-            </span>
+            <span className="card-spec-item">{annonce.pieces} p.</span>
           )}
           {annonce.chambres && (
-            <span className="mpill" title="Nombre de chambres">
-              🛏 <b>{annonce.chambres} ch.</b>
-            </span>
+            <span className="card-spec-item">{annonce.chambres} ch.</span>
           )}
           {annonce.dpe && annonce.dpe !== 'Non renseigné' && (
-            <span className={`dpe-badge dpe-${annonce.dpe}`} title={`Classe énergétique ${annonce.dpe}`}>
+            <span className={`card-spec-dpe dpe-${annonce.dpe}`}>
               {annonce.dpe}
             </span>
           )}
           {annonce.exterieur && (
-            <span className="ext-pill">
+            <span className="card-spec-item">
               {EXTERIOR[annonce.exterieur] ?? annonce.exterieur}
             </span>
           )}
         </div>
 
-        {/* Contact info snippet */}
-        {(annonce.cnom || annonce.agenceNom || annonce.ctel) && (
-          <div className="card-contact-line">
-            <span className="contact-name" title={annonce.cnom || annonce.agenceNom}>
-              {annonce.agenceType === 'particulier' ? '👤 ' : '🏢 '}
-              {annonce.cnom || annonce.agenceNom || 'Contact'}
-            </span>
-            {annonce.ctel && (
-              <a
-                href={`tel:${annonce.ctel}`}
-                className="contact-tel"
-                onClick={(e) => e.stopPropagation()}
-                title={`Appeler ${annonce.ctel}`}
-              >
-                📞 <span className="tel-digits">{annonce.ctel}</span>
-              </a>
-            )}
-          </div>
+        {/* Notes preview */}
+        {annonce.notes && (
+          <p className="card-notes-preview">{annonce.notes}</p>
         )}
 
-        {/* VISIT & GOOGLE AGENDA SECTION */}
+        {/* Visit Section */}
         <div className="card-visit-section" onClick={(e) => e.stopPropagation()}>
           {editingVisit ? (
-            <div className="visit-editor">
-              <label className="visit-editor-lbl">📅 Date & heure de visite :</label>
+            <div className="card-visit-editor">
               <input
                 type="datetime-local"
                 value={tempVisit}
                 onChange={(e) => setTempVisit(e.target.value)}
-                className="visit-datetime-input"
-                autoFocus
+                className="card-visit-input"
               />
-              <div className="visit-editor-actions">
-                <button type="button" className="btn-save-visit" onClick={handleSaveVisit}>
-                  ✓ Enregistrer
+              <div className="card-visit-editor-actions">
+                <button
+                  type="button"
+                  className="btn-visit-save"
+                  onClick={handleSaveVisit}
+                >
+                  Valider
                 </button>
-                <button type="button" className="btn-cancel-visit" onClick={() => setEditingVisit(false)}>
-                  Annuler
+                <button
+                  type="button"
+                  className="btn-visit-cancel"
+                  onClick={() => setEditingVisit(false)}
+                >
+                  ✕
                 </button>
-                {annonce.visitDate && (
-                  <button
-                    type="button"
-                    className="btn-clear-visit"
-                    onClick={() => { setTempVisit(''); handleSaveVisit({ stopPropagation: () => {} }); }}
-                    title="Supprimer la date de visite"
-                  >
-                    Effacer
-                  </button>
-                )}
               </div>
             </div>
           ) : isVisitValid ? (
             <div className="card-visit-scheduled">
               <div className="visit-scheduled-info">
-                <span className="visit-badge-icon">📅</span>
-                <div className="visit-badge-text">
-                  <div className="visit-badge-title">Visite programmée</div>
-                  <div className="visit-badge-time">
+                <span className="visit-scheduled-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                </span>
+                <div>
+                  <div className="visit-scheduled-label">Visite planifiée</div>
+                  <div className="visit-scheduled-date">
                     {visitDate.toLocaleDateString('fr-FR', {
                       weekday: 'short',
                       day: 'numeric',
@@ -266,25 +260,28 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
                     href={gcalHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    title="Ajouter automatiquement à Google Agenda avec l'adresse, l'agent et la fiche"
+                    title="Ajouter à Google Agenda"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    📅 Google Agenda
+                    Google Agenda
                   </a>
                 )}
                 <button
                   type="button"
                   className="btn-visit-edit"
                   onClick={() => { setTempVisit(annonce.visitDate || ''); setEditingVisit(true); }}
-                  title="Modifier la date de la visite"
+                  title="Modifier la date de visite"
                 >
-                  ✏️
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
                 </button>
                 <button
                   type="button"
                   className="btn-visit-cancel-direct"
                   onClick={handleCancelVisit}
-                  title="Supprimer / Annuler le rendez-vous de visite"
+                  title="Annuler le rendez-vous"
                 >
                   ✕
                 </button>
@@ -306,14 +303,14 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
           <div className="card-scores-row">
             {annonce.scoreFranck > 0 && (
               <div className="score-badge franck" title={`Note Franck : ${annonce.scoreFranck}/10`}>
-                <span className="score-avatar">🧔</span>
+                <span className="score-badge-avatar franck">F</span>
                 <span className="score-val">{annonce.scoreFranck}</span>
                 <span className="score-denom">/10</span>
               </div>
             )}
             {annonce.scoreLaura > 0 && (
               <div className="score-badge laura" title={`Note Laura : ${annonce.scoreLaura}/10`}>
-                <span className="score-avatar">👩</span>
+                <span className="score-badge-avatar laura">L</span>
                 <span className="score-val">{annonce.scoreLaura}</span>
                 <span className="score-denom">/10</span>
               </div>
@@ -334,7 +331,11 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
               rel="noopener noreferrer"
               title="Ouvrir l'annonce d'origine"
             >
-              🔗
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
             </a>
           )}
           <button
@@ -343,7 +344,7 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
             onClick={onClick}
             title="Consulter et modifier la fiche complète"
           >
-            Fiche ➜
+            Fiche ➔
           </button>
           {annonce.archived ? (
             <>
@@ -353,7 +354,7 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
                 onClick={handleRestore}
                 title="Restaurer l'annonce dans la liste active"
               >
-                ↩
+                Restaurer
               </button>
               <button
                 type="button"
@@ -361,7 +362,10 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
                 onClick={handlePermanentDelete}
                 title="Supprimer définitivement"
               >
-                🗑
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
               </button>
             </>
           ) : (
@@ -371,7 +375,11 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
               onClick={handleArchive}
               title="Archiver l'annonce"
             >
-              📦
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="21 8 21 21 3 21 3 8" />
+                <rect x="1" y="3" width="22" height="5" />
+                <line x1="10" y1="12" x2="14" y2="12" />
+              </svg>
             </button>
           )}
         </div>

@@ -3,39 +3,44 @@ import { useNavigate } from 'react-router-dom';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { STATUS, EXTERIOR, CITIES, geocode, setPhoto } from '../utils';
+import { PlatformLogo } from './PlatformLogo';
 
 const SOURCES = ['Le Bon Coin', 'SeLoger', 'PAP', 'Jinka', 'Bien\'ici', 'Autre'];
 
 const EXT_OPT = [
-  { value: 'aucun',            label: '🚫 Aucun' },
-  { value: 'balcon',           label: '🪟 Balcon' },
-  { value: 'terrasse',         label: '☀️ Terrasse' },
-  { value: 'grande-terrasse',  label: '🌅 Grande terrasse' },
-  { value: 'jardin',           label: '🌿 Jardin' },
-  { value: 'grand-jardin',     label: '🌳 Grand jardin' },
+  { value: 'aucun',            label: 'Sans extérieur' },
+  { value: 'balcon',           label: 'Balcon' },
+  { value: 'terrasse',         label: 'Terrasse' },
+  { value: 'grande-terrasse',  label: 'Grande terrasse' },
+  { value: 'jardin',           label: 'Jardin' },
+  { value: 'grand-jardin',     label: 'Grand jardin' },
 ];
 
 const DPE_OPTS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'Non renseigné'];
 const PIECES_OPTS = ['1', '2', '3', '4', '5', '6+'];
 const CHAMBRES_OPTS = ['0', '1', '2', '3', '4', '5+'];
 
-function StarPicker({ label, value, onChange }) {
+function StarPicker({ label, value, onChange, avatar, avatarClass }) {
+  const currentVal = Math.max(0, Math.min(10, Number(value) || 0));
   return (
     <div className="star-picker-wrap">
-      <label>{label}</label>
+      <div className="star-picker-label-row">
+        {avatar && <span className={`eval-avatar-mark ${avatarClass}`}>{avatar}</span>}
+        <label>{label}</label>
+      </div>
       <div className="star-row">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
           <button
             type="button"
             key={star}
-            className={`star-btn ${value >= star ? 'filled' : ''}`}
-            onClick={() => onChange(value === star ? 0 : star)}
+            className={`star-btn ${currentVal >= star ? 'filled' : ''}`}
+            onClick={() => onChange(currentVal === star ? 0 : star)}
             title={`${star}/10`}
           >
             ★
           </button>
         ))}
-        <span className="star-score-val">{value ? `${value}/10` : '—'}</span>
+        <span className="star-score-val">{currentVal ? `${currentVal}/10` : '—'}</span>
       </div>
     </div>
   );
@@ -371,14 +376,14 @@ export default function AddWizard({ onToast }) {
           className={`tab-btn ${mode === 'wizard' ? 'active' : ''}`}
           onClick={() => setMode('wizard')}
         >
-          📝 Formulaire rapide 1-clic
+          Formulaire express
         </button>
         <button
           type="button"
           className={`tab-btn ${mode === 'json' ? 'active' : ''}`}
           onClick={() => setMode('json')}
         >
-          📥 Importer un JSON IA
+          Importer un JSON IA
         </button>
       </div>
 
@@ -399,21 +404,25 @@ export default function AddWizard({ onToast }) {
                   onClick={handleCopyAiPrompt}
                   title="Copier le prompt complet pour ChatGPT / Claude / Gemini"
                 >
-                  📋 Copier le prompt pour l'IA
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 5 }}>
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                  Copier le prompt IA
                 </button>
                 <button
                   type="button"
                   className="btn-load-sample"
                   onClick={handleLoadSample}
                 >
-                  📄 Charger l'exemple
+                  Charger l'exemple
                 </button>
               </div>
             </div>
 
             {/* AI Schema Guide Details */}
             <div className="json-schema-guide">
-              <span className="guide-badge">💡 Options autorisées pour votre IA :</span>
+              <span className="guide-badge">Options autorisées pour votre IA :</span>
               <ul className="guide-list">
                 <li><b>statut</b> : <code>"appeler"</code>, <code>"visite"</code>, <code>"dossier"</code>, <code>"attente"</code>, <code>"refuse"</code>, <code>"ok"</code></li>
                 <li><b>exterieur</b> : <code>"aucun"</code>, <code>"balcon"</code>, <code>"terrasse"</code>, <code>"grande-terrasse"</code>, <code>"jardin"</code>, <code>"grand-jardin"</code></li>
@@ -444,7 +453,7 @@ export default function AddWizard({ onToast }) {
                 disabled={saving || !jsonStatus?.valid}
                 onClick={handleImportJson}
               >
-                {saving ? '⏳ Enregistrement...' : '🚀 Valider et Importer dans les annonces'}
+                {saving ? 'Enregistrement...' : 'Valider et Importer dans les annonces'}
               </button>
             </div>
           </div>
@@ -453,7 +462,7 @@ export default function AddWizard({ onToast }) {
             {/* Step 1 : Identité du bien */}
             {step === 1 && (
               <div className="wizard-step slide-in">
-                <h3>🏷 Étape 1 : Identité & Contact</h3>
+                <h3>Étape 1 : Identité & Contact</h3>
 
                 <div className="fg">
                   <label>Titre de l'annonce *</label>
@@ -470,7 +479,7 @@ export default function AddWizard({ onToast }) {
 
                 {/* Statut 1-click pills */}
                 <div className="fg">
-                  <label>Statut</label>
+                  <label>Statut de suivi</label>
                   <div className="chip-selector-group">
                     {Object.entries(STATUS).map(([key, item]) => {
                       const isSel = formData.statut === key;
@@ -486,6 +495,7 @@ export default function AddWizard({ onToast }) {
                           }
                           onClick={() => handleFieldSelect('statut', key)}
                         >
+                          <span className="pip-dot" style={{ backgroundColor: item.dot || item.color }} />
                           {item.label}
                         </button>
                       );
@@ -493,18 +503,19 @@ export default function AddWizard({ onToast }) {
                   </div>
                 </div>
 
-                {/* Source 1-click pills */}
+                {/* Source 1-click pills with Platform Logos */}
                 <div className="fg">
-                  <label>Source</label>
+                  <label>Plateforme d'origine</label>
                   <div className="chip-selector-group">
                     {SOURCES.map((s) => (
                       <button
                         key={s}
                         type="button"
-                        className={`btn-chip-option ${formData.source === s ? 'selected' : ''}`}
+                        className={`btn-chip-option btn-platform-chip ${formData.source === s ? 'selected' : ''}`}
                         onClick={() => handleFieldSelect('source', s)}
                       >
-                        {s}
+                        <PlatformLogo source={s} size={16} />
+                        <span>{s}</span>
                       </button>
                     ))}
                   </div>
@@ -512,7 +523,7 @@ export default function AddWizard({ onToast }) {
 
                 {formData.statut === 'visite' && (
                   <div className="fg highlight-field">
-                    <label>📅 Date et heure de visite prévue</label>
+                    <label>Date et heure de visite prévue</label>
                     <input
                       name="visitDate"
                       type="datetime-local"
@@ -543,14 +554,14 @@ export default function AddWizard({ onToast }) {
                         className={formData.agenceType === 'particulier' ? 'active' : ''}
                         onClick={() => handleFieldSelect('agenceType', 'particulier')}
                       >
-                        👤 Particulier
+                        Particulier
                       </button>
                       <button
                         type="button"
                         className={formData.agenceType === 'agence' ? 'active' : ''}
                         onClick={() => handleFieldSelect('agenceType', 'agence')}
                       >
-                        🏢 Agence
+                        Agence
                       </button>
                     </div>
                   </div>
@@ -572,7 +583,7 @@ export default function AddWizard({ onToast }) {
             {/* Step 2 : Localisation */}
             {step === 2 && (
               <div className="wizard-step slide-in">
-                <h3>📍 Étape 2 : Localisation</h3>
+                <h3>Étape 2 : Localisation</h3>
 
                 {/* Villes 1-click pills (6 premières) */}
                 <div className="fg">
@@ -585,7 +596,7 @@ export default function AddWizard({ onToast }) {
                         className={`btn-chip-option ${formData.ville === c ? 'selected' : ''}`}
                         onClick={() => handleFieldSelect('ville', c)}
                       >
-                        📍 {c}
+                        {c}
                       </button>
                     ))}
                     <button
@@ -593,7 +604,7 @@ export default function AddWizard({ onToast }) {
                       className={`btn-chip-option ${formData.ville === '__autre' ? 'selected' : ''}`}
                       onClick={() => handleFieldSelect('ville', '__autre')}
                     >
-                      ✏️ Autre ville...
+                      Autre ville...
                     </button>
                   </div>
                   {formData.ville === '__autre' && (
@@ -629,7 +640,7 @@ export default function AddWizard({ onToast }) {
             {/* Step 3 : Le Bien & Contact */}
             {step === 3 && (
               <div className="wizard-step slide-in">
-                <h3>📐 Étape 3 : Le Bien & Métriques</h3>
+                <h3>Étape 3 : Le Bien & Caractéristiques</h3>
 
                 <div className="frow-compact">
                   <div className="fg">
@@ -758,7 +769,7 @@ export default function AddWizard({ onToast }) {
             {/* Step 4 : Photo & Avis */}
             {step === 4 && (
               <div className="wizard-step slide-in">
-                <h3>📷 Étape 4 : Photo & Avis</h3>
+                <h3>Étape 4 : Photo & Avis</h3>
                 <PhotoUpload
                   photo={photo}
                   onChange={setPhotoState}
@@ -776,14 +787,18 @@ export default function AddWizard({ onToast }) {
                 </div>
                 <div className="frow-compact" style={{ marginTop: 8 }}>
                   <StarPicker
-                    label="Note Franck 🧔"
+                    label="Note Franck"
+                    avatar="F"
+                    avatarClass="franck"
                     value={formData.scoreFranck}
-                    onChange={(v) => setFormData((p) => ({ ...p, scoreFranck: v }))}
+                    onChange={(v) => setFormData((p) => ({ ...p, scoreFranck: Math.max(0, Math.min(10, v)) }))}
                   />
                   <StarPicker
-                    label="Note Laura 👩"
+                    label="Note Laura"
+                    avatar="L"
+                    avatarClass="laura"
                     value={formData.scoreLaura}
-                    onChange={(v) => setFormData((p) => ({ ...p, scoreLaura: v }))}
+                    onChange={(v) => setFormData((p) => ({ ...p, scoreLaura: Math.max(0, Math.min(10, v)) }))}
                   />
                 </div>
               </div>
@@ -803,10 +818,10 @@ export default function AddWizard({ onToast }) {
               )}
               <button type="submit" className="btn-primary" disabled={saving}>
                 {saving
-                  ? '⏳ En cours...'
+                  ? 'En cours...'
                   : step < 4
                   ? 'Suivant →'
-                  : '💾 Terminer et Enregistrer'}
+                  : 'Enregistrer l\'annonce'}
               </button>
             </div>
           </form>
