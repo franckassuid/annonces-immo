@@ -660,16 +660,6 @@ export default function AnnonceDetails({ onToast }) {
                 </div>
               </div>
             </div>
-
-            <div style={{ marginTop: '8px' }}>
-              <InlineEdit
-                label="Notes & Impressions libres"
-                value={annonce.notes}
-                type="textarea"
-                onSave={(v) => updateField('notes', v)}
-                placeholder="Ressenti, points forts, points faibles, transports, luminosité..."
-              />
-            </div>
           </div>
         </div>
 

@@ -656,14 +656,31 @@ body {
 .btn-json-action.upload:hover { background: var(--sage); color: #fff; }
 
 .json-editor-wrap { display: flex; flex-direction: column; gap: 5px; }
+textarea.json-textarea,
 .json-textarea {
-  width: 100%; background: #1e1b18; color: #f8f6f1;
+  width: 100%;
+  background: #181614 !important;
+  color: #f3efe6 !important;
   font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
-  font-size: 0.78rem; line-height: 1.4;
-  border-radius: 6px; border: 1px solid var(--border); padding: 8px;
-  outline: none; resize: vertical; box-shadow: inset 0 2px 4px rgba(0,0,0,0.25);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  padding: 12px;
+  outline: none;
+  resize: vertical;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
 }
-.json-textarea:focus { border-color: var(--accent); }
+textarea.json-textarea::placeholder,
+.json-textarea::placeholder {
+  color: #8c827a !important;
+}
+textarea.json-textarea:focus,
+.json-textarea:focus {
+  border-color: var(--accent) !important;
+  background: #12100e !important;
+  color: #ffffff !important;
+}
 .json-status-banner {
   padding: 5px 8px; border-radius: 5px; font-size: 0.74rem; font-weight: 700;
 }

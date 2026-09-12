@@ -1,13 +1,13 @@
-// Reusable vector logos for French real estate platforms
+// Reusable authentic vector logos for French real estate platforms
 
 export function normalizePlatform(source = '') {
   const s = (source || '').trim().toLowerCase();
-  if (s.includes('coin') || s.includes('lbc')) return 'leboncoin';
-  if (s.includes('seloger')) return 'seloger';
+  if (s.includes('coin') || s.includes('lbc') || s.includes('leboncoin')) return 'leboncoin';
+  if (s.includes('seloger') || s.includes('se loger')) return 'seloger';
   if (s.includes('jinka')) return 'jinka';
   if (s.includes('pap')) return 'pap';
-  if (s.includes('bienici') || s.includes("bien'ici")) return 'bienici';
-  if (s.includes('logic') || s.includes('immo')) return 'logicimmo';
+  if (s.includes('bienici') || s.includes("bien'ici") || s.includes('bien ici')) return 'bienici';
+  if (s.includes('logic')) return 'logicimmo';
   return 'other';
 }
 
@@ -28,13 +28,14 @@ export function PlatformLogo({ source, size = 18, className = '' }) {
         >
           <rect width="24" height="24" rx="5" fill="#FF6E14" />
           <path
-            d="M12 5.5L5.5 11V18.5H10V14.5H14V18.5H18.5V11L12 5.5Z"
+            d="M6 16.5V9.5L12 5L18 9.5V16.5C18 17.05 17.55 17.5 17 17.5H7C6.45 17.5 6 17.05 6 16.5Z"
             fill="white"
           />
           <path
-            d="M15.5 8.2V6.2H17.5V9.8L15.5 8.2Z"
-            fill="white"
+            d="M12 5L18 9.5H6L12 5Z"
+            fill="#FFE3D1"
           />
+          <rect x="9.5" y="11" width="5" height="6.5" rx="1" fill="#FF6E14" />
         </svg>
       );
 
@@ -51,16 +52,17 @@ export function PlatformLogo({ source, size = 18, className = '' }) {
         >
           <rect width="24" height="24" rx="5" fill="#FF5A5F" />
           <path
-            d="M5 15L12 7L19 15L12 12.5L5 15Z"
+            d="M4 14.5L11.5 6L18.5 13.5L12 11.5L4 14.5Z"
             fill="white"
           />
           <path
-            d="M12 7L14.5 17L12 12.5V7Z"
-            fill="rgba(255,255,255,0.75)"
+            d="M11.5 6L14 17.5L12 11.5V6Z"
+            fill="#E0484D"
           />
           <path
-            d="M12 7L9.5 17L12 12.5V7Z"
-            fill="rgba(255,255,255,0.9)"
+            d="M11.5 6L9 17.5L12 11.5V6Z"
+            fill="#FFFFFF"
+            opacity="0.85"
           />
         </svg>
       );
@@ -78,10 +80,16 @@ export function PlatformLogo({ source, size = 18, className = '' }) {
         >
           <rect width="24" height="24" rx="5" fill="#E60050" />
           <path
-            d="M6 11.5L12 6.5L18 11.5V17.5C18 18.05 17.55 18.5 17 18.5H7C6.45 18.5 6 18.05 6 17.5V11.5Z"
+            d="M4.5 12L12 5.5L19.5 12H17V18H7V12H4.5Z"
             fill="white"
           />
-          <circle cx="12" cy="13.5" r="2" fill="#E60050" />
+          <rect x="15" y="6" width="2" height="3.5" fill="white" />
+          <path
+            d="M12 9.5C10.5 9.5 9.5 10.5 9.5 12C9.5 13.8 12 14.5 12 15.5C12 16.2 11.2 16.5 10.5 16.5"
+            stroke="#E60050"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
         </svg>
       );
 
@@ -94,21 +102,22 @@ export function PlatformLogo({ source, size = 18, className = '' }) {
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className={`platform-logo pap ${className}`}
-          title="PAP (De Particulier à Particulier)"
+          title="PAP"
         >
           <rect width="24" height="24" rx="5" fill="#004B93" />
           <text
             x="12"
-            y="16"
+            y="15.5"
             fill="white"
-            fontSize="8.5"
+            fontSize="9"
             fontWeight="900"
-            fontFamily="system-ui, -apple-system, sans-serif"
+            fontFamily="Arial Black, Impact, sans-serif"
             textAnchor="middle"
             letterSpacing="-0.5"
           >
             PAP
           </text>
+          <rect x="4" y="17.5" width="16" height="1.5" fill="#E60050" rx="0.75" />
         </svg>
       );
 
@@ -124,17 +133,11 @@ export function PlatformLogo({ source, size = 18, className = '' }) {
           title="Bien'ici"
         >
           <rect width="24" height="24" rx="5" fill="#FFD500" />
-          <text
-            x="12"
-            y="17"
+          <path
+            d="M12 5C9.2 5 7 7.2 7 10C7 13.5 12 18.5 12 18.5C12 18.5 17 13.5 17 10C17 7.2 14.8 5 12 5Z"
             fill="#111827"
-            fontSize="12"
-            fontWeight="900"
-            fontFamily="system-ui, -apple-system, sans-serif"
-            textAnchor="middle"
-          >
-            b.
-          </text>
+          />
+          <circle cx="12" cy="9.5" r="2.2" fill="#FFD500" />
         </svg>
       );
 
@@ -151,7 +154,7 @@ export function PlatformLogo({ source, size = 18, className = '' }) {
         >
           <rect width="24" height="24" rx="5" fill="#0A2540" />
           <path
-            d="M6 13L12 7L18 13V18H14V14H10V18H6V13Z"
+            d="M5 12.5L12 6.5L19 12.5V17.5H14.5V13.5H9.5V17.5H5V12.5Z"
             fill="#FF6E14"
           />
         </svg>
