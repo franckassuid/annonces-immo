@@ -421,17 +421,6 @@ export default function AddWizard({ onToast }) {
               </div>
             </div>
 
-            {/* AI Schema Guide Details */}
-            <div className="json-schema-guide">
-              <span className="guide-badge">Options autorisées pour votre IA :</span>
-              <ul className="guide-list">
-                <li><b>statut</b> : <code>"appeler"</code>, <code>"visite"</code>, <code>"dossier"</code>, <code>"attente"</code>, <code>"refuse"</code>, <code>"ok"</code></li>
-                <li><b>exterieur</b> : <code>"aucun"</code>, <code>"balcon"</code>, <code>"terrasse"</code>, <code>"grande-terrasse"</code>, <code>"jardin"</code>, <code>"grand-jardin"</code></li>
-                <li><b>dpe</b> : <code>"A"</code> à <code>"G"</code> ou <code>"Non renseigné"</code></li>
-                <li><b>agenceType</b> : <code>"particulier"</code> ou <code>"agence"</code></li>
-                <li><b>ville</b> : <code>"Bordeaux"</code>, <code>"Talence"</code>, <code>"Pessac"</code>, <code>"Mérignac"</code>, <code>"Bègles"</code>, <code>"Villenave-d'Ornon"</code></li>
-              </ul>
-            </div>
 
             <textarea
               className="json-textarea"
