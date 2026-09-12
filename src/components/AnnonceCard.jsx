@@ -173,21 +173,27 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
         {/* Specs */}
         <div className="card-specs-row">
           {annonce.surface && (
-            <span className="card-spec-item">{annonce.surface} m²</span>
-          )}
-          {annonce.pieces && (
-            <span className="card-spec-item">{annonce.pieces} p.</span>
-          )}
-          {annonce.chambres && (
-            <span className="card-spec-item">{annonce.chambres} ch.</span>
-          )}
-          {annonce.dpe && annonce.dpe !== 'Non renseigné' && (
-            <span className={`card-spec-dpe dpe-${annonce.dpe}`}>
-              {annonce.dpe}
+            <span className="card-spec-chip">
+              {annonce.surface} m²
             </span>
           )}
-          {annonce.exterieur && (
-            <span className="card-spec-item">
+          {annonce.pieces && (
+            <span className="card-spec-chip">
+              {annonce.pieces} {Number(annonce.pieces) === 1 ? 'pièce' : 'pièces'}
+            </span>
+          )}
+          {annonce.chambres && (
+            <span className="card-spec-chip">
+              {annonce.chambres} {Number(annonce.chambres) === 1 ? 'chambre' : 'chambres'}
+            </span>
+          )}
+          {annonce.dpe && annonce.dpe !== 'Non renseigné' && (
+            <span className={`card-spec-dpe-badge dpe-${annonce.dpe}`}>
+              DPE {annonce.dpe}
+            </span>
+          )}
+          {annonce.exterieur && annonce.exterieur !== 'aucun' && (
+            <span className="card-spec-chip exterior">
               {EXTERIOR[annonce.exterieur] ?? annonce.exterieur}
             </span>
           )}

@@ -432,6 +432,57 @@ body {
 .price-period { font-size: 0.72rem; font-weight: 600; color: var(--text-3); }
 .price-unset { font-size: 0.78rem; font-weight: 600; color: var(--text-3); }
 
+/* Specs Row & Badge Chips */
+.card-specs-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 5px !important;
+  margin: 6px 0 !important;
+}
+
+.card-spec-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  background: #f4f2ee !important;
+  border: 1px solid var(--border-2) !important;
+  color: var(--text-1) !important;
+  font-size: 0.76rem !important;
+  font-weight: 600 !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  line-height: 1.3 !important;
+  white-space: nowrap !important;
+}
+
+.card-spec-chip.exterior {
+  background: #ecfdf5 !important;
+  color: #065f46 !important;
+  border-color: #a7f3d0 !important;
+}
+
+.card-spec-dpe-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  line-height: 1.3 !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08) !important;
+  white-space: nowrap !important;
+}
+
+.card-spec-dpe-badge.dpe-A { background: #059669 !important; }
+.card-spec-dpe-badge.dpe-B { background: #10b981 !important; }
+.card-spec-dpe-badge.dpe-C { background: #84cc16 !important; color: #1a2e05 !important; }
+.card-spec-dpe-badge.dpe-D { background: #eab308 !important; color: #3a2503 !important; }
+.card-spec-dpe-badge.dpe-E { background: #f97316 !important; }
+.card-spec-dpe-badge.dpe-F { background: #ef4444 !important; }
+.card-spec-dpe-badge.dpe-G { background: #991b1b !important; }
+
 /* Meta pills */
 .card-meta { display: flex; gap: 3px; flex-wrap: wrap; overflow: hidden; }
 .mpill {
