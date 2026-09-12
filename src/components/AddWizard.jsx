@@ -566,16 +566,18 @@ export default function AddWizard({ onToast }) {
                     </div>
                   </div>
 
-                  <div className="fg">
-                    <label>Nom de l'agence ou propriétaire</label>
-                    <input
-                      name="agenceNom"
-                      type="text"
-                      placeholder="Ex: Century 21..."
-                      value={formData.agenceNom}
-                      onChange={handleChange}
-                    />
-                  </div>
+                  {formData.agenceType === 'agence' && (
+                    <div className="fg">
+                      <label>Nom de l'agence</label>
+                      <input
+                        name="agenceNom"
+                        type="text"
+                        placeholder="Ex: Century 21..."
+                        value={formData.agenceNom}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             )}

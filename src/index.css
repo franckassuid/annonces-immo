@@ -807,33 +807,50 @@ input::placeholder, textarea::placeholder { color: var(--text-3); }
   width: 100%; box-sizing: border-box;
 }
 
-/* Top bar */
+/* Top bar (Strict single line) */
 .details-topbar {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 6px 12px; box-shadow: var(--shadow-sm); margin-bottom: 14px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  background: #fff !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 6px 10px !important;
+  box-shadow: var(--shadow-sm) !important;
+  margin-bottom: 14px !important;
+  white-space: nowrap !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
 }
+.details-topbar::-webkit-scrollbar { display: none; }
 .btn-back {
   background: transparent; border: none; font-size: 0.78rem; font-weight: 700;
   color: var(--text-2); cursor: pointer; font-family: inherit;
   display: inline-flex; align-items: center; gap: 3px; transition: var(--transition);
+  flex-shrink: 0;
 }
 .btn-back:hover { color: var(--accent); transform: translateX(-2px); }
 
 .details-status-pipeline {
-  display: flex; gap: 4px; align-items: center; flex-wrap: wrap;
+  display: flex !important;
+  gap: 3px !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  flex-shrink: 0 !important;
 }
 .status-pip-btn {
-  border: 1px solid transparent; border-radius: 12px; padding: 3px 8px;
+  border: 1px solid transparent; border-radius: 999px; padding: 3px 8px;
   font-size: 0.7rem; font-weight: 700; font-family: inherit; cursor: pointer;
-  transition: var(--transition);
+  transition: var(--transition); white-space: nowrap; flex-shrink: 0;
+  display: inline-flex; align-items: center; gap: 4px;
 }
 .status-pip-btn:hover { background: var(--surface-subtle); color: var(--text-1); }
 .status-pip-btn.selected {
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
-.details-topbar-actions { display: flex; align-items: center; gap: 5px; }
+.details-topbar-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .btn-fav-top {
   background: var(--surface-subtle); border: 1px solid var(--border);
   border-radius: 5px; padding: 4px 8px; font-size: 0.72rem; font-weight: 700;
@@ -1092,7 +1109,30 @@ input::placeholder, textarea::placeholder { color: var(--text-3); }
 .btn-visit-save-main { background: var(--sage); color: #fff; border: none; border-radius: 6px; padding: 6px 10px; font-size: 0.74rem; font-weight: 800; cursor: pointer; }
 .btn-visit-cancel-main { background: transparent; border: 1px solid var(--border); color: var(--text-2); border-radius: 6px; padding: 6px 10px; font-size: 0.74rem; font-weight: 600; cursor: pointer; }
 
-/* Avis & Évaluations Written Box */
+/* Avis & Évaluations Written Box & Range Slider */
+.score-head-right { display: flex; align-items: center; gap: 6px; }
+.btn-remove-score-pill {
+  background: #fee2e2; border: 1px solid #fecaca; color: #dc2626;
+  border-radius: 999px; padding: 1px 7px; font-size: 0.64rem; font-weight: 800;
+  cursor: pointer; transition: var(--transition); font-family: inherit;
+}
+.btn-remove-score-pill:hover { background: #fca5a5; color: #7f1d1d; }
+
+.score-slider-box { display: flex; flex-direction: column; gap: 2px; margin: 8px 0 4px 0; }
+.slider-row { display: flex; align-items: center; width: 100%; }
+.score-range-input {
+  width: 100% !important;
+  accent-color: var(--accent) !important;
+  cursor: pointer !important;
+  height: 6px !important;
+  border-radius: 4px !important;
+  background: var(--border-2) !important;
+}
+.score-slider-ticks {
+  display: flex; justify-content: space-between;
+  font-size: 0.64rem; font-weight: 700; color: var(--text-3); padding: 0 2px;
+}
+
 .score-pills-row { display: flex; flex-wrap: wrap; gap: 3px; margin: 6px 0; }
 .avis-text-box { margin-top: 8px; border-top: 1px dashed var(--border-2); padding-top: 6px; }
 .eval-current-score.has-score { color: #d97706; font-weight: 900; }

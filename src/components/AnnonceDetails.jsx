@@ -208,11 +208,11 @@ export default function AnnonceDetails({ onToast }) {
     try {
       let finalVal = val;
       if (field === 'scoreFranck' || field === 'scoreLaura') {
-        if (val === '' || val === null || val === undefined) {
+        if (val === '' || val === null || val === undefined || val === 0) {
           finalVal = 0;
         } else {
           const num = Number(val);
-          finalVal = isNaN(num) ? 0 : Math.max(0, Math.min(10, Math.round(num * 10) / 10));
+          finalVal = isNaN(num) ? 0 : Math.max(0, Math.min(10, Math.round(num)));
         }
       }
       await updateDoc(doc(db, 'annonces', id), {
@@ -313,17 +313,16 @@ export default function AnnonceDetails({ onToast }) {
     onToast(nextFav ? 'Ajouté aux favoris' : 'Retiré des favoris');
   };
 
-  // Save Call Log
+  // Save Call Log (Notes are optional!)
   const handleSaveCallLog = async (e) => {
     e.preventDefault();
-    if (!callNotes.trim()) return;
     const currentLogs = annonce.callsLog || [];
     const newCall = {
       id: Date.now().toString(),
       date: new Date().toISOString(),
       author: callAuthor,
       status: callStatus,
-      notes: callNotes,
+      notes: callNotes || '',
     };
 
     const payload = {
@@ -340,7 +339,7 @@ export default function AnnonceDetails({ onToast }) {
       setShowAddCall(false);
       setCallNotes('');
       setCallRappelDate('');
-      onToast('Appel enregistré avec succès !');
+      onToast('Appel enregistré !');
     } catch (err) {
       console.error(err);
       onToast('Erreur lors de l\'enregistrement de l\'appel');
@@ -368,7 +367,7 @@ export default function AnnonceDetails({ onToast }) {
         rappelDate: val || null,
         updatedAt: new Date().toISOString(),
       });
-      onToast(val ? 'Rappel d\'agence planifié !' : 'Rappel supprimé');
+      onToast(val ? 'Rappel planifié !' : 'Rappel supprimé');
     } catch (err) {
       console.error(err);
       onToast('Erreur lors de la planification');
@@ -389,7 +388,7 @@ export default function AnnonceDetails({ onToast }) {
 
   return (
     <div className="details-wrapper">
-      {/* Top action navigation */}
+      {/* Top action navigation bar (STRICT SINGLE LINE) */}
       <div className="details-topbar">
         <button type="button" className="btn-back" onClick={() => navigate('/')}>
           ← Retour
@@ -435,11 +434,6 @@ export default function AnnonceDetails({ onToast }) {
               title="Ouvrir l'annonce d'origine"
             >
               <PlatformBadge source={annonce.source || 'Autre'} />
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6 }}>
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
             </a>
           )}
           {annonce.archived ? (
@@ -717,7 +711,7 @@ export default function AnnonceDetails({ onToast }) {
             </div>
           </div>
 
-          {/* AVIS & EVALUATIONS */}
+          {/* AVIS & EVALUATIONS WITH RANGE SLIDERS & REMOVE SCORE BUTTON */}
           <div className="details-section-card">
             <div className="section-card-header">
               <div className="sec-title-with-icon">
@@ -735,23 +729,41 @@ export default function AnnonceDetails({ onToast }) {
                     <span className="eval-name">Franck</span>
                     <span className="eval-sub">Note & Avis</span>
                   </div>
-                  <span className={`eval-current-score ${annonce.scoreFranck ? 'has-score' : ''}`}>
-                    {annonce.scoreFranck ? `★ ${annonce.scoreFranck}/10` : '—'}
-                  </span>
+                  <div className="score-head-right">
+                    <span className={`eval-current-score ${annonce.scoreFranck ? 'has-score' : ''}`}>
+                      {annonce.scoreFranck ? `★ ${annonce.scoreFranck}/10` : 'Aucune note'}
+                    </span>
+                    {Boolean(annonce.scoreFranck) && (
+                      <button
+                        type="button"
+                        className="btn-remove-score-pill"
+                        onClick={() => updateField('scoreFranck', 0)}
+                        title="Retirer la note de Franck"
+                      >
+                        ✕ Retirer
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                <div className="score-pills-row">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((pt) => (
-                    <button
-                      key={pt}
-                      type="button"
-                      className={`score-quick-btn ${Number(annonce.scoreFranck) === pt ? 'active' : ''}`}
-                      onClick={() => updateField('scoreFranck', Number(annonce.scoreFranck) === pt ? 0 : pt)}
-                      title={`${pt}/10`}
-                    >
-                      {pt}
-                    </button>
-                  ))}
+                {/* Range Slider for Score */}
+                <div className="score-slider-box">
+                  <div className="slider-row">
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      step="1"
+                      value={annonce.scoreFranck || 5}
+                      onChange={(e) => updateField('scoreFranck', Number(e.target.value))}
+                      className="score-range-input"
+                    />
+                  </div>
+                  <div className="score-slider-ticks">
+                    <span>1</span>
+                    <span>5</span>
+                    <span>10</span>
+                  </div>
                 </div>
 
                 <div className="avis-text-box">
@@ -773,23 +785,41 @@ export default function AnnonceDetails({ onToast }) {
                     <span className="eval-name">Laura</span>
                     <span className="eval-sub">Note & Avis</span>
                   </div>
-                  <span className={`eval-current-score ${annonce.scoreLaura ? 'has-score' : ''}`}>
-                    {annonce.scoreLaura ? `★ ${annonce.scoreLaura}/10` : '—'}
-                  </span>
+                  <div className="score-head-right">
+                    <span className={`eval-current-score ${annonce.scoreLaura ? 'has-score' : ''}`}>
+                      {annonce.scoreLaura ? `★ ${annonce.scoreLaura}/10` : 'Aucune note'}
+                    </span>
+                    {Boolean(annonce.scoreLaura) && (
+                      <button
+                        type="button"
+                        className="btn-remove-score-pill"
+                        onClick={() => updateField('scoreLaura', 0)}
+                        title="Retirer la note de Laura"
+                      >
+                        ✕ Retirer
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                <div className="score-pills-row">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((pt) => (
-                    <button
-                      key={pt}
-                      type="button"
-                      className={`score-quick-btn ${Number(annonce.scoreLaura) === pt ? 'active' : ''}`}
-                      onClick={() => updateField('scoreLaura', Number(annonce.scoreLaura) === pt ? 0 : pt)}
-                      title={`${pt}/10`}
-                    >
-                      {pt}
-                    </button>
-                  ))}
+                {/* Range Slider for Score */}
+                <div className="score-slider-box">
+                  <div className="slider-row">
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      step="1"
+                      value={annonce.scoreLaura || 5}
+                      onChange={(e) => updateField('scoreLaura', Number(e.target.value))}
+                      className="score-range-input"
+                    />
+                  </div>
+                  <div className="score-slider-ticks">
+                    <span>1</span>
+                    <span>5</span>
+                    <span>10</span>
+                  </div>
                 </div>
 
                 <div className="avis-text-box">
@@ -820,7 +850,7 @@ export default function AnnonceDetails({ onToast }) {
                 className="btn-add-call-trigger"
                 onClick={() => setShowAddCall(!showAddCall)}
               >
-                {showAddCall ? '✕ Fermer' : '+ Ajouter un appel'}
+                {showAddCall ? '✕ Fermer' : '+ Consigner un appel'}
               </button>
             </div>
 
@@ -852,7 +882,7 @@ export default function AnnonceDetails({ onToast }) {
 
               <div className="agency-subgrid">
                 <InlineEdit
-                  label="Type"
+                  label="Type d'interlocuteur"
                   value={annonce.agenceType}
                   options={[
                     { value: 'agence', label: 'Agence' },
@@ -860,12 +890,14 @@ export default function AnnonceDetails({ onToast }) {
                   ]}
                   onSave={(v) => updateField('agenceType', v)}
                 />
-                <InlineEdit
-                  label="Nom de l'agence"
-                  value={annonce.agenceNom}
-                  onSave={(v) => updateField('agenceNom', v)}
-                  placeholder="Ex: Century 21..."
-                />
+                {annonce.agenceType === 'agence' && (
+                  <InlineEdit
+                    label="Nom de l'agence"
+                    value={annonce.agenceNom}
+                    onSave={(v) => updateField('agenceNom', v)}
+                    placeholder="Ex: Century 21..."
+                  />
+                )}
               </div>
 
               <InlineEdit
@@ -898,7 +930,7 @@ export default function AnnonceDetails({ onToast }) {
               )}
             </div>
 
-            {/* CALL LOG FORM */}
+            {/* CALL LOG FORM (Optional call notes) */}
             {showAddCall && (
               <form className="call-log-form" onSubmit={handleSaveCallLog}>
                 <h4>Consigner un échange téléphonique</h4>
@@ -935,13 +967,12 @@ export default function AnnonceDetails({ onToast }) {
                 </div>
 
                 <div className="fg" style={{ marginTop: 8 }}>
-                  <label>Remarques sur l'appel *</label>
+                  <label>Remarques sur l'appel <span style={{ fontWeight: 400, color: 'var(--text-3)' }}>(facultatif)</span></label>
                   <textarea
                     rows={2}
                     value={callNotes}
                     onChange={(e) => setCallNotes(e.target.value)}
-                    placeholder="Compte-rendu de l'échange avec l'agent ou le propriétaire..."
-                    required
+                    placeholder="Remarques éventuelles sur l'échange (optionnel)..."
                   />
                 </div>
 
@@ -965,7 +996,7 @@ export default function AnnonceDetails({ onToast }) {
             <div className="calls-history-list">
               <span className="calls-history-title">Historique des appels ({annonce.callsLog?.length || 0})</span>
               {(!annonce.callsLog || annonce.callsLog.length === 0) ? (
-                <p className="no-calls-text">Aucun appel consigné. Cliquez sur "+ Ajouter un appel" pour consigner un échange.</p>
+                <p className="no-calls-text">Aucun appel consigné. Cliquez sur "+ Consigner un appel" pour ajouter un échange.</p>
               ) : (
                 <div className="calls-timeline">
                   {annonce.callsLog.map((call) => {
