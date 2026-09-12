@@ -1035,7 +1035,7 @@ input::placeholder, textarea::placeholder { color: var(--text-3); }
 .sec-title-with-icon h3 { font-size: 0.88rem; font-weight: 800; color: var(--text-1); margin: 0; }
 .sec-subtitle { font-size: 0.68rem; font-weight: 500; color: var(--text-3); margin-top: 1px; }
 
-/* Visit Feature Card */
+/* Visit Feature Card Redesign */
 .visit-feature-card {
   background: linear-gradient(135deg, #ffffff 0%, var(--sage-bg) 100%);
   border: 1.5px solid var(--sage-bdr);
@@ -1047,6 +1047,102 @@ input::placeholder, textarea::placeholder { color: var(--text-3); }
   transition: var(--transition);
 }
 .btn-gcal-large:hover { background: var(--sage-hover); }
+
+.visit-scheduled-banner {
+  background: #ffffff;
+  border: 1px solid var(--sage-bdr);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.visit-banner-left { display: flex; flex-direction: column; gap: 3px; }
+.visit-scheduled-badge {
+  font-size: 0.68rem; font-weight: 800; color: var(--sage);
+  background: var(--sage-bg); padding: 2px 7px; border-radius: 4px; display: inline-block; width: fit-content;
+}
+.visit-banner-datetime { font-size: 0.86rem; color: var(--text-1); text-transform: capitalize; }
+.visit-banner-datetime strong { color: var(--accent); }
+
+.visit-banner-right { display: flex; align-items: center; gap: 6px; }
+.btn-visit-action {
+  border: none; border-radius: 6px; padding: 4px 10px; font-size: 0.74rem; font-weight: 700;
+  cursor: pointer; transition: var(--transition); font-family: inherit;
+}
+.btn-visit-action.edit { background: var(--surface-subtle); color: var(--text-1); border: 1px solid var(--border-2); }
+.btn-visit-action.edit:hover { background: var(--border-hover); }
+.btn-visit-action.cancel { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.btn-visit-action.cancel:hover { background: #fee2e2; }
+
+.visit-empty-box { text-align: center; padding: 12px 6px; }
+.visit-empty-box p { font-size: 0.8rem; color: var(--text-3); margin-bottom: 8px; }
+.btn-plan-visit-hero {
+  background: var(--sage); color: #fff; border: none; border-radius: 6px;
+  padding: 6px 14px; font-size: 0.78rem; font-weight: 800; cursor: pointer;
+  box-shadow: 0 2px 6px rgba(78,112,85,0.2); transition: var(--transition);
+}
+.btn-plan-visit-hero:hover { background: var(--sage-hover); }
+
+.visit-date-picker-box { display: flex; flex-direction: column; gap: 6px; }
+.visit-date-picker-box label { font-size: 0.76rem; font-weight: 700; color: var(--text-2); }
+.visit-picker-row { display: flex; align-items: center; gap: 6px; }
+.visit-datetime-input { flex: 1; padding: 6px 8px; font-size: 0.82rem; border-radius: 6px; border: 1px solid var(--border); }
+.btn-visit-save-main { background: var(--sage); color: #fff; border: none; border-radius: 6px; padding: 6px 10px; font-size: 0.74rem; font-weight: 800; cursor: pointer; }
+.btn-visit-cancel-main { background: transparent; border: 1px solid var(--border); color: var(--text-2); border-radius: 6px; padding: 6px 10px; font-size: 0.74rem; font-weight: 600; cursor: pointer; }
+
+/* Avis & Évaluations Written Box */
+.score-pills-row { display: flex; flex-wrap: wrap; gap: 3px; margin: 6px 0; }
+.avis-text-box { margin-top: 8px; border-top: 1px dashed var(--border-2); padding-top: 6px; }
+.eval-current-score.has-score { color: #d97706; font-weight: 900; }
+
+/* Call Logging & Reminders Section */
+.btn-add-call-trigger {
+  background: var(--sage-bg); color: var(--sage); border: 1px solid var(--sage-bdr);
+  border-radius: 5px; padding: 3px 8px; font-size: 0.72rem; font-weight: 800;
+  cursor: pointer; transition: var(--transition); font-family: inherit;
+}
+.btn-add-call-trigger:hover { background: var(--sage); color: #fff; }
+
+.rappel-section-wrap {
+  margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border-2);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.rappel-header-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.sec-sub-title { font-size: 0.74rem; font-weight: 800; color: var(--text-2); }
+.rappel-active-banner {
+  background: #fef3c7; border: 1px solid #fde68a; color: #b45309;
+  border-radius: 6px; padding: 5px 8px; font-size: 0.74rem; font-weight: 600;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.btn-clear-rappel { background: transparent; border: none; color: #b45309; cursor: pointer; font-size: 0.75rem; font-weight: 800; }
+
+.call-log-form {
+  background: var(--surface-subtle); border: 1.5px solid var(--accent-bdr);
+  border-radius: 8px; padding: 10px; margin-top: 8px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.call-log-form h4 { margin: 0 0 4px 0; font-size: 0.8rem; font-weight: 800; color: var(--accent); }
+.call-form-row { display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px; }
+.call-form-actions { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+
+.calls-history-list { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border-2); }
+.calls-history-title { font-size: 0.74rem; font-weight: 800; color: var(--text-2); display: block; margin-bottom: 6px; }
+.no-calls-text { font-size: 0.72rem; color: var(--text-3); font-style: italic; margin: 0; }
+
+.calls-timeline { display: flex; flex-direction: column; gap: 6px; }
+.call-log-item {
+  background: var(--surface-subtle); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 8px; font-size: 0.75rem;
+}
+.call-item-head { display: flex; align-items: center; gap: 5px; }
+.call-item-author { font-weight: 800; color: var(--text-1); font-size: 0.74rem; }
+.call-status-badge { font-size: 0.65rem; font-weight: 800; padding: 1px 5px; border-radius: 4px; }
+.call-item-date { font-size: 0.68rem; color: var(--text-3); margin-left: auto; }
+.btn-delete-call { background: transparent; border: none; color: var(--text-3); cursor: pointer; font-size: 0.7rem; }
+.btn-delete-call:hover { color: #dc2626; }
+.call-item-notes { margin: 4px 0 0 0; font-size: 0.74rem; color: var(--text-2); line-height: 1.35; white-space: pre-wrap; }
 
 .visit-fields-grid { display: flex; flex-direction: column; gap: 6px; }
 .visit-summary-box {

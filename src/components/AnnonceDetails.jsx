@@ -11,7 +11,7 @@ import {
   setPhoto,
   clearPhoto,
 } from '../utils';
-import { PlatformBadge, PlatformLogo } from './PlatformLogo';
+import { PlatformBadge } from './PlatformLogo';
 
 function InlineEdit({
   label,
@@ -175,6 +175,17 @@ export default function AnnonceDetails({ onToast }) {
   const [photo, setPhotoState] = useState('');
   const [loading, setLoading] = useState(true);
 
+  // Visit Date Editing State
+  const [editingVisitDate, setEditingVisitDate] = useState(false);
+  const [tempVisitDate, setTempVisitDate] = useState('');
+
+  // Call Logging State
+  const [showAddCall, setShowAddCall] = useState(false);
+  const [callAuthor, setCallAuthor] = useState('Franck');
+  const [callStatus, setCallStatus] = useState('joint');
+  const [callNotes, setCallNotes] = useState('');
+  const [callRappelDate, setCallRappelDate] = useState('');
+
   useEffect(() => {
     if (!id) return;
     const unsub = onSnapshot(doc(db, 'annonces', id), (snap) => {
@@ -245,7 +256,6 @@ export default function AnnonceDetails({ onToast }) {
     reader.readAsDataURL(file);
   };
 
-  // Archive instead of delete
   const handleArchive = async () => {
     if (!confirm('Archiver cette annonce ? Elle sera conservée dans vos archives.')) return;
     try {
@@ -261,7 +271,6 @@ export default function AnnonceDetails({ onToast }) {
     }
   };
 
-  // Restore
   const handleRestore = async () => {
     try {
       await updateDoc(doc(db, 'annonces', id), {
@@ -275,7 +284,6 @@ export default function AnnonceDetails({ onToast }) {
     }
   };
 
-  // Permanent Delete
   const handlePermanentDelete = async () => {
     if (!confirm('Supprimer DÉFINITIVEMENT cette annonce ? Cette action est irréversible.')) return;
     try {
@@ -289,7 +297,6 @@ export default function AnnonceDetails({ onToast }) {
     }
   };
 
-  // Cancel Visit
   const handleCancelVisit = async () => {
     try {
       await updateDoc(doc(db, 'annonces', id), { visitDate: null });
@@ -304,6 +311,68 @@ export default function AnnonceDetails({ onToast }) {
     const nextFav = !annonce?.fav;
     await updateField('fav', nextFav);
     onToast(nextFav ? 'Ajouté aux favoris' : 'Retiré des favoris');
+  };
+
+  // Save Call Log
+  const handleSaveCallLog = async (e) => {
+    e.preventDefault();
+    if (!callNotes.trim()) return;
+    const currentLogs = annonce.callsLog || [];
+    const newCall = {
+      id: Date.now().toString(),
+      date: new Date().toISOString(),
+      author: callAuthor,
+      status: callStatus,
+      notes: callNotes,
+    };
+
+    const payload = {
+      callsLog: [newCall, ...currentLogs],
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (callRappelDate) {
+      payload.rappelDate = callRappelDate;
+    }
+
+    try {
+      await updateDoc(doc(db, 'annonces', id), payload);
+      setShowAddCall(false);
+      setCallNotes('');
+      setCallRappelDate('');
+      onToast('Appel enregistré avec succès !');
+    } catch (err) {
+      console.error(err);
+      onToast('Erreur lors de l\'enregistrement de l\'appel');
+    }
+  };
+
+  const handleDeleteCallLog = async (callId) => {
+    const currentLogs = annonce.callsLog || [];
+    const updatedLogs = currentLogs.filter((c) => c.id !== callId);
+    try {
+      await updateDoc(doc(db, 'annonces', id), {
+        callsLog: updatedLogs,
+        updatedAt: new Date().toISOString(),
+      });
+      onToast('Appel supprimé');
+    } catch (err) {
+      console.error(err);
+      onToast('Erreur de suppression');
+    }
+  };
+
+  const handleSaveRappelDate = async (val) => {
+    try {
+      await updateDoc(doc(db, 'annonces', id), {
+        rappelDate: val || null,
+        updatedAt: new Date().toISOString(),
+      });
+      onToast(val ? 'Rappel d\'agence planifié !' : 'Rappel supprimé');
+    } catch (err) {
+      console.error(err);
+      onToast('Erreur lors de la planification');
+    }
   };
 
   if (loading) return <div className="detail-loading"><div className="loading-spinner"></div>Chargement de la fiche...</div>;
@@ -407,7 +476,7 @@ export default function AnnonceDetails({ onToast }) {
 
       {/* Main Grid */}
       <div className="details-grid-main">
-        {/* Left Column : Media, Visit, Evaluations */}
+        {/* Left Column : Media, Essential Specs, Visit & Evaluations */}
         <div className="details-col-main">
           {/* Hero Media Card */}
           <div className="details-hero-card">
@@ -443,10 +512,10 @@ export default function AnnonceDetails({ onToast }) {
                 />
               </div>
 
-              {/* Essential Quick-Summary Card (Matching User Reference) */}
+              {/* Essential Quick-Summary Card */}
               <div className="details-essential-card">
                 <div className="essential-specs-grid">
-                  {/* Left Column: Surface */}
+                  {/* Surface */}
                   <div className="essential-spec-item">
                     <div className="essential-spec-icon">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -460,7 +529,7 @@ export default function AnnonceDetails({ onToast }) {
                     </div>
                   </div>
 
-                  {/* Right Column: Localisation */}
+                  {/* Localisation */}
                   <div className="essential-spec-item">
                     <div className="essential-spec-icon">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -474,7 +543,7 @@ export default function AnnonceDetails({ onToast }) {
                     </div>
                   </div>
 
-                  {/* Left Column: Pièces */}
+                  {/* Pièces */}
                   <div className="essential-spec-item">
                     <div className="essential-spec-icon">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -488,7 +557,7 @@ export default function AnnonceDetails({ onToast }) {
                     </div>
                   </div>
 
-                  {/* Right Column: Loyer */}
+                  {/* Loyer */}
                   <div className="essential-spec-item">
                     <div className="essential-spec-icon">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -502,7 +571,7 @@ export default function AnnonceDetails({ onToast }) {
                     </div>
                   </div>
 
-                  {/* Left Column: Chambres */}
+                  {/* Chambres */}
                   <div className="essential-spec-item">
                     <div className="essential-spec-icon">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -550,127 +619,128 @@ export default function AnnonceDetails({ onToast }) {
           <div className="details-section-card visit-feature-card">
             <div className="section-card-header">
               <div className="sec-title-with-icon">
-                <span className="sec-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                  </svg>
-                </span>
-                <h3>Visite & Agenda Google</h3>
+                <span className="sec-icon">📅</span>
+                <h3>Rendez-vous de visite</h3>
               </div>
-              <div className="visit-header-actions">
-                {isVisitValid && (
-                  <button
-                    type="button"
-                    className="btn-cancel-visit-sheet"
-                    onClick={handleCancelVisit}
-                    title="Supprimer / Annuler le rendez-vous"
-                  >
-                    ✕ Annuler RDV
-                  </button>
-                )}
-                {gcalHref && (
-                  <a
-                    href={gcalHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-gcal-large"
-                    title="Ajouter à Google Agenda"
-                  >
-                    Google Agenda ➔
-                  </a>
-                )}
-              </div>
+              {gcalHref && isVisitValid && (
+                <a
+                  href={gcalHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-gcal-large"
+                  title="Ajouter à Google Agenda"
+                >
+                  Google Agenda ➔
+                </a>
+              )}
             </div>
 
-            <div className="visit-fields-grid">
-              {isVisitValid ? (
-                <div className="visit-summary-box">
-                  <span className="vs-badge">✓ Visite programmée</span>
-                  <div className="vs-details">
-                    <b>{visitDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</b>
-                    &nbsp;à&nbsp;
-                    <b>{visitDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</b>
+            <div className="visit-card-content">
+              {editingVisitDate ? (
+                <div className="visit-date-picker-box">
+                  <label>Sélectionner la date et heure de visite :</label>
+                  <div className="visit-picker-row">
+                    <input
+                      type="datetime-local"
+                      value={tempVisitDate}
+                      onChange={(e) => setTempVisitDate(e.target.value)}
+                      className="visit-datetime-input"
+                    />
+                    <button
+                      type="button"
+                      className="btn-visit-save-main"
+                      onClick={async () => {
+                        await updateField('visitDate', tempVisitDate);
+                        if (tempVisitDate && (!annonce.statut || annonce.statut === 'appeler')) {
+                          await updateField('statut', 'visite');
+                        }
+                        setEditingVisitDate(false);
+                      }}
+                    >
+                      ✓ Valider
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-visit-cancel-main"
+                      onClick={() => setEditingVisitDate(false)}
+                    >
+                      Annuler
+                    </button>
                   </div>
-                  <InlineEdit
-                    label="Modifier date"
-                    value={annonce.visitDate}
-                    type="datetime-local"
-                    onSave={(v) => updateField('visitDate', v)}
-                    compact
-                  />
+                </div>
+              ) : isVisitValid ? (
+                <div className="visit-scheduled-banner">
+                  <div className="visit-banner-left">
+                    <span className="visit-scheduled-badge">✓ Visite programmée</span>
+                    <div className="visit-banner-datetime">
+                      <b>{visitDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</b>
+                      &nbsp;à&nbsp;
+                      <strong>{visitDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</strong>
+                    </div>
+                  </div>
+
+                  <div className="visit-banner-right">
+                    <button
+                      type="button"
+                      className="btn-visit-action edit"
+                      onClick={() => {
+                        setTempVisitDate(annonce.visitDate || '');
+                        setEditingVisitDate(true);
+                      }}
+                    >
+                      Modifier
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-visit-action cancel"
+                      onClick={handleCancelVisit}
+                    >
+                      Annuler RDV
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <InlineEdit
-                  label="Date et heure de visite"
-                  value={annonce.visitDate}
-                  type="datetime-local"
-                  onSave={(v) => {
-                    updateField('visitDate', v);
-                    if (v && (!annonce.statut || annonce.statut === 'appeler')) {
-                      updateField('statut', 'visite');
-                    }
-                  }}
-                  placeholder="Cliquer pour fixer une date de visite"
-                />
+                <div className="visit-empty-box">
+                  <p>Aucun rendez-vous de visite fixé pour le moment.</p>
+                  <button
+                    type="button"
+                    className="btn-plan-visit-hero"
+                    onClick={() => {
+                      setTempVisitDate('');
+                      setEditingVisitDate(true);
+                    }}
+                  >
+                    + Fixer une date de visite
+                  </button>
+                </div>
               )}
             </div>
           </div>
 
-          {/* Avis & Notes libres */}
+          {/* AVIS & EVALUATIONS */}
           <div className="details-section-card">
             <div className="section-card-header">
               <div className="sec-title-with-icon">
-                <span className="sec-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                  </svg>
-                </span>
-                <h3>Avis & Notes d'évaluation</h3>
+                <span className="sec-icon">💬</span>
+                <h3>Avis & Évaluations des membres</h3>
               </div>
             </div>
 
             <div className="scores-duo-grid">
+              {/* Franck's Evaluation */}
               <div className="score-eval-tile">
                 <div className="score-eval-head">
                   <span className="eval-avatar-mark franck">F</span>
                   <div className="eval-user-info">
                     <span className="eval-name">Franck</span>
-                    <span className="eval-sub">Note personnelle</span>
+                    <span className="eval-sub">Note & Avis</span>
                   </div>
-                  <span className="eval-current-score">{annonce.scoreFranck ? `${annonce.scoreFranck}/10` : '—'}</span>
+                  <span className={`eval-current-score ${annonce.scoreFranck ? 'has-score' : ''}`}>
+                    {annonce.scoreFranck ? `★ ${annonce.scoreFranck}/10` : '—'}
+                  </span>
                 </div>
-                <div className="score-stepper-row">
-                  <button
-                    type="button"
-                    className="score-step-btn"
-                    onClick={() => updateField('scoreFranck', Math.max(0, (Number(annonce.scoreFranck) || 0) - 1))}
-                    title="Diminuer la note"
-                  >
-                    −
-                  </button>
-                  <InlineEdit
-                    label="Note (/10)"
-                    value={annonce.scoreFranck}
-                    type="number"
-                    min={0}
-                    max={10}
-                    step={1}
-                    suffix=" / 10"
-                    onSave={(v) => updateField('scoreFranck', v)}
-                  />
-                  <button
-                    type="button"
-                    className="score-step-btn"
-                    onClick={() => updateField('scoreFranck', Math.min(10, (Number(annonce.scoreFranck) || 0) + 1))}
-                    title="Augmenter la note (max 10)"
-                  >
-                    +
-                  </button>
-                </div>
-                <div className="score-quick-pills">
+
+                <div className="score-pills-row">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((pt) => (
                     <button
                       key={pt}
@@ -683,46 +753,32 @@ export default function AnnonceDetails({ onToast }) {
                     </button>
                   ))}
                 </div>
+
+                <div className="avis-text-box">
+                  <InlineEdit
+                    label="Remarques & avis de Franck"
+                    value={annonce.avisFranck}
+                    type="textarea"
+                    onSave={(v) => updateField('avisFranck', v)}
+                    placeholder="Ajouter un avis écrit par Franck (atouts, quartier, points d'attention)..."
+                  />
+                </div>
               </div>
 
+              {/* Laura's Evaluation */}
               <div className="score-eval-tile">
                 <div className="score-eval-head">
                   <span className="eval-avatar-mark laura">L</span>
                   <div className="eval-user-info">
                     <span className="eval-name">Laura</span>
-                    <span className="eval-sub">Note personnelle</span>
+                    <span className="eval-sub">Note & Avis</span>
                   </div>
-                  <span className="eval-current-score">{annonce.scoreLaura ? `${annonce.scoreLaura}/10` : '—'}</span>
+                  <span className={`eval-current-score ${annonce.scoreLaura ? 'has-score' : ''}`}>
+                    {annonce.scoreLaura ? `★ ${annonce.scoreLaura}/10` : '—'}
+                  </span>
                 </div>
-                <div className="score-stepper-row">
-                  <button
-                    type="button"
-                    className="score-step-btn"
-                    onClick={() => updateField('scoreLaura', Math.max(0, (Number(annonce.scoreLaura) || 0) - 1))}
-                    title="Diminuer la note"
-                  >
-                    −
-                  </button>
-                  <InlineEdit
-                    label="Note (/10)"
-                    value={annonce.scoreLaura}
-                    type="number"
-                    min={0}
-                    max={10}
-                    step={1}
-                    suffix=" / 10"
-                    onSave={(v) => updateField('scoreLaura', v)}
-                  />
-                  <button
-                    type="button"
-                    className="score-step-btn"
-                    onClick={() => updateField('scoreLaura', Math.min(10, (Number(annonce.scoreLaura) || 0) + 1))}
-                    title="Augmenter la note (max 10)"
-                  >
-                    +
-                  </button>
-                </div>
-                <div className="score-quick-pills">
+
+                <div className="score-pills-row">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((pt) => (
                     <button
                       key={pt}
@@ -735,101 +791,37 @@ export default function AnnonceDetails({ onToast }) {
                     </button>
                   ))}
                 </div>
+
+                <div className="avis-text-box">
+                  <InlineEdit
+                    label="Remarques & avis de Laura"
+                    value={annonce.avisLaura}
+                    type="textarea"
+                    onSave={(v) => updateField('avisLaura', v)}
+                    placeholder="Ajouter un avis écrit par Laura (atouts, quartier, points d'attention)..."
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Column : Compact Specs & Contact Details */}
+        {/* Right Column : Contact & Journal d'appels / Rappels (No duplicates!) */}
         <div className="details-col-side">
-          {/* Card Caractéristiques : Compact 2x3 Grid */}
+          {/* Card Contact & Suivi des appels */}
           <div className="details-section-card">
             <div className="section-card-header">
               <div className="sec-title-with-icon">
-                <span className="sec-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="12 2 2 7 12 12 22 7 12 2" />
-                    <polyline points="2 17 12 22 22 17" />
-                    <polyline points="2 12 12 17 22 12" />
-                  </svg>
-                </span>
-                <h3>Caractéristiques du bien</h3>
+                <span className="sec-icon">👤</span>
+                <h3>Contact & Journal d'appels</h3>
               </div>
-            </div>
-
-            <div className="specs-grid-tiles-compact">
-              <InlineEdit
-                label="Surface"
-                value={annonce.surface}
-                type="number"
-                suffix=" m²"
-                onSave={(v) => updateField('surface', v)}
-              />
-              <InlineEdit
-                label="Pièces"
-                value={annonce.pieces}
-                type="number"
-                suffix=" p."
-                onSave={(v) => updateField('pieces', v)}
-              />
-              <InlineEdit
-                label="Chambres"
-                value={annonce.chambres}
-                type="number"
-                suffix=" ch."
-                onSave={(v) => updateField('chambres', v)}
-              />
-              <InlineEdit
-                label="DPE"
-                value={annonce.dpe}
-                options={[
-                  { value: 'Non renseigné', label: 'Non renseigné' },
-                  ...['A', 'B', 'C', 'D', 'E', 'F', 'G'].map((l) => ({ value: l, label: `Classe ${l}` })),
-                ]}
-                onSave={(v) => updateField('dpe', v)}
-              />
-              <InlineEdit
-                label="Extérieur"
-                value={annonce.exterieur}
-                options={[
-                  { value: '', label: 'Aucun' },
-                  ...Object.entries(EXTERIOR).map(([k, v]) => ({ value: k, label: v })),
-                ]}
-                onSave={(v) => updateField('exterieur', v)}
-              />
-              <InlineEdit
-                label="Plateforme"
-                value={annonce.source}
-                options={[
-                  'Le Bon Coin', 'SeLoger', 'PAP', 'Jinka', "Bien'ici", 'Logic-Immo', 'Autre',
-                ].map((s) => ({ value: s, label: s }))}
-                onSave={(v) => updateField('source', v)}
-              />
-            </div>
-
-            <div style={{ marginTop: '8px' }}>
-              <InlineEdit
-                label="Lien web de l'annonce"
-                value={annonce.url}
-                type="url"
-                onSave={(v) => updateField('url', v)}
-                placeholder="https://..."
-              />
-            </div>
-          </div>
-
-          {/* Card Contact & Interlocuteur */}
-          <div className="details-section-card">
-            <div className="section-card-header">
-              <div className="sec-title-with-icon">
-                <span className="sec-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                </span>
-                <h3>Contact & Interlocuteur</h3>
-              </div>
+              <button
+                type="button"
+                className="btn-add-call-trigger"
+                onClick={() => setShowAddCall(!showAddCall)}
+              >
+                {showAddCall ? '✕ Fermer' : '+ Ajouter un appel'}
+              </button>
             </div>
 
             <div className="contact-fields-stack">
@@ -875,6 +867,143 @@ export default function AnnonceDetails({ onToast }) {
                   placeholder="Ex: Century 21..."
                 />
               </div>
+
+              <InlineEdit
+                label="Lien web de l'annonce"
+                value={annonce.url}
+                type="url"
+                onSave={(v) => updateField('url', v)}
+                placeholder="https://..."
+              />
+            </div>
+
+            {/* RAPPEL PLANIFIÉ SECTION */}
+            <div className="rappel-section-wrap">
+              <div className="rappel-header-row">
+                <span className="sec-sub-title">⏰ Rappel de l'agence</span>
+                <InlineEdit
+                  label="Fixer une date de rappel"
+                  value={annonce.rappelDate}
+                  type="datetime-local"
+                  onSave={handleSaveRappelDate}
+                  placeholder="+ Planifier un rappel"
+                  compact
+                />
+              </div>
+              {annonce.rappelDate && (
+                <div className="rappel-active-banner">
+                  <span>⏰ Rappel prévu le <b>{new Date(annonce.rappelDate).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}</b> à <b>{new Date(annonce.rappelDate).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</b></span>
+                  <button type="button" onClick={() => handleSaveRappelDate(null)} className="btn-clear-rappel" title="Effacer le rappel">✕</button>
+                </div>
+              )}
+            </div>
+
+            {/* CALL LOG FORM */}
+            {showAddCall && (
+              <form className="call-log-form" onSubmit={handleSaveCallLog}>
+                <h4>Consigner un échange téléphonique</h4>
+                <div className="call-form-row">
+                  <div className="fg">
+                    <label>Auteur de l'appel</label>
+                    <div className="segmented-control">
+                      <button
+                        type="button"
+                        className={callAuthor === 'Franck' ? 'active' : ''}
+                        onClick={() => setCallAuthor('Franck')}
+                      >
+                        Franck
+                      </button>
+                      <button
+                        type="button"
+                        className={callAuthor === 'Laura' ? 'active' : ''}
+                        onClick={() => setCallAuthor('Laura')}
+                      >
+                        Laura
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="fg">
+                    <label>Résultat de l'échange</label>
+                    <select value={callStatus} onChange={(e) => setCallStatus(e.target.value)}>
+                      <option value="joint">✓ Échange réussi (Joint)</option>
+                      <option value="repondeur">📱 Message sur répondeur</option>
+                      <option value="pas-de-reponse">🚫 Pas de réponse</option>
+                      <option value="rappel">⏰ Rappel demandé</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="fg" style={{ marginTop: 8 }}>
+                  <label>Remarques sur l'appel *</label>
+                  <textarea
+                    rows={2}
+                    value={callNotes}
+                    onChange={(e) => setCallNotes(e.target.value)}
+                    placeholder="Compte-rendu de l'échange avec l'agent ou le propriétaire..."
+                    required
+                  />
+                </div>
+
+                <div className="fg" style={{ marginTop: 8 }}>
+                  <label>Rappel à planifier (Optionnel)</label>
+                  <input
+                    type="datetime-local"
+                    value={callRappelDate}
+                    onChange={(e) => setCallRappelDate(e.target.value)}
+                  />
+                </div>
+
+                <div className="call-form-actions">
+                  <button type="submit" className="btn-primary">Enregistrer l'appel</button>
+                  <button type="button" className="btn-secondary" onClick={() => setShowAddCall(false)}>Annuler</button>
+                </div>
+              </form>
+            )}
+
+            {/* LOGGED CALLS TIMELINE */}
+            <div className="calls-history-list">
+              <span className="calls-history-title">Historique des appels ({annonce.callsLog?.length || 0})</span>
+              {(!annonce.callsLog || annonce.callsLog.length === 0) ? (
+                <p className="no-calls-text">Aucun appel consigné. Cliquez sur "+ Ajouter un appel" pour consigner un échange.</p>
+              ) : (
+                <div className="calls-timeline">
+                  {annonce.callsLog.map((call) => {
+                    const callDate = new Date(call.date);
+                    const statusLabels = {
+                      joint: { label: 'Joint', bg: '#d1fae5', color: '#065f46' },
+                      repondeur: { label: 'Répondeur', bg: '#fef3c7', color: '#b45309' },
+                      'pas-de-reponse': { label: 'Pas de réponse', bg: '#fee2e2', color: '#991b1b' },
+                      rappel: { label: 'Rappel demandé', bg: '#dbeafe', color: '#1e40af' },
+                    };
+                    const st = statusLabels[call.status] || statusLabels.joint;
+
+                    return (
+                      <div key={call.id} className="call-log-item">
+                        <div className="call-item-head">
+                          <span className={`eval-avatar-mark ${call.author.toLowerCase()}`}>{call.author[0]}</span>
+                          <span className="call-item-author">{call.author}</span>
+                          <span className="call-status-badge" style={{ backgroundColor: st.bg, color: st.color }}>
+                            {st.label}
+                          </span>
+                          <span className="call-item-date">
+                            {callDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} à {callDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <button
+                            type="button"
+                            className="btn-delete-call"
+                            onClick={() => handleDeleteCallLog(call.id)}
+                            title="Supprimer cet appel"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        {call.notes && <p className="call-item-notes">{call.notes}</p>}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>
