@@ -887,6 +887,137 @@ input::placeholder, textarea::placeholder { color: var(--text-3); }
 
 .details-hero-body { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
 .details-title-row .inline-tile-val { font-size: 1.1rem; font-weight: 800; color: var(--text-1); line-height: 1.25; }
+
+/* Essential Summary Card (as requested by user screenshot) */
+.details-essential-card {
+  background: #fdfbf7 !important;
+  border: 1.5px solid #ece4d8 !important;
+  border-radius: 14px !important;
+  padding: 14px 16px !important;
+  margin-top: 6px !important;
+  box-shadow: 0 2px 8px rgba(34,30,27,0.04) !important;
+}
+
+.essential-specs-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px 16px !important;
+  align-items: center !important;
+}
+
+@media (max-width: 600px) {
+  .essential-specs-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+}
+
+.essential-spec-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.essential-spec-icon {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 8px !important;
+  background: #f3eee6 !important;
+  color: #e05624 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+.essential-spec-label {
+  display: flex !important;
+  flex-direction: column !important;
+  line-height: 1.2 !important;
+}
+
+.essential-spec-val {
+  font-weight: 800 !important;
+  font-size: 0.95rem !important;
+  color: #1a1614 !important;
+}
+
+.essential-spec-sub {
+  font-size: 0.72rem !important;
+  color: #78716c !important;
+  font-weight: 500 !important;
+  margin-top: 1px !important;
+}
+
+.essential-badges-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-top: 12px !important;
+  padding-top: 10px !important;
+  border-top: 1px dashed #e7decb !important;
+}
+
+.essential-dpe-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 4px 10px !important;
+  border-radius: 8px !important;
+  font-size: 0.78rem !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+}
+
+.essential-dpe-badge.dpe-A { background: #059669 !important; }
+.essential-dpe-badge.dpe-B { background: #10b981 !important; }
+.essential-dpe-badge.dpe-C { background: #84cc16 !important; color: #1a2e05 !important; }
+.essential-dpe-badge.dpe-D { background: #eab308 !important; color: #3a2503 !important; }
+.essential-dpe-badge.dpe-E { background: #f97316 !important; }
+.essential-dpe-badge.dpe-F { background: #ef4444 !important; }
+.essential-dpe-badge.dpe-G { background: #991b1b !important; }
+
+.essential-ext-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  background: #ecfdf5 !important;
+  color: #065f46 !important;
+  border: 1px solid #a7f3d0 !important;
+  padding: 4px 10px !important;
+  border-radius: 8px !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+}
+
+.essential-score-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  background: #ffffff !important;
+  border: 1px solid #e7decb !important;
+  padding: 3px 8px !important;
+  border-radius: 8px !important;
+  font-size: 0.78rem !important;
+  font-weight: 800 !important;
+  color: #292524 !important;
+}
+
+.essential-score-pill .avatar-mark {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  color: white !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.65rem !important;
+  font-weight: 900 !important;
+}
+
+.essential-score-pill .avatar-mark.franck { background: #2563eb !important; }
+.essential-score-pill .avatar-mark.laura { background: #ec4899 !important; }
 .details-price-row .inline-tile-val { font-size: 1.2rem; font-weight: 800; color: var(--accent); letter-spacing: -0.02em; }
 .details-loc-row { display: grid; grid-template-columns: 1fr 2fr; gap: 6px; }
 

@@ -443,28 +443,105 @@ export default function AnnonceDetails({ onToast }) {
                 />
               </div>
 
-              <div className="details-price-row">
-                <InlineEdit
-                  label="Loyer mensuel"
-                  value={annonce.prix}
-                  type="number"
-                  suffix=" € / mois"
-                  onSave={(v) => updateField('prix', v)}
-                />
-              </div>
+              {/* Essential Quick-Summary Card (Matching User Reference) */}
+              <div className="details-essential-card">
+                <div className="essential-specs-grid">
+                  {/* Left Column: Surface */}
+                  <div className="essential-spec-item">
+                    <div className="essential-spec-icon">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="9" y1="3" x2="9" y2="21"/>
+                      </svg>
+                    </div>
+                    <div className="essential-spec-label">
+                      <span className="essential-spec-val">{annonce.surface ? `${annonce.surface} m²` : 'Non renseigné'}</span>
+                      <span className="essential-spec-sub">Surface</span>
+                    </div>
+                  </div>
 
-              <div className="details-loc-row">
-                <InlineEdit
-                  label="Ville"
-                  value={annonce.ville}
-                  onSave={(v) => updateField('ville', v)}
-                />
-                <InlineEdit
-                  label="Adresse exacte"
-                  value={annonce.adresse}
-                  onSave={(v) => updateField('adresse', v)}
-                  placeholder="Ex: 14 rue de la Paix"
-                />
+                  {/* Right Column: Localisation */}
+                  <div className="essential-spec-item">
+                    <div className="essential-spec-icon">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                    </div>
+                    <div className="essential-spec-label">
+                      <span className="essential-spec-val">{annonce.ville || 'Gironde'}</span>
+                      <span className="essential-spec-sub">{annonce.adresse || 'Adresse à préciser'}</span>
+                    </div>
+                  </div>
+
+                  {/* Left Column: Pièces */}
+                  <div className="essential-spec-item">
+                    <div className="essential-spec-icon">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M9 3v18"/>
+                      </svg>
+                    </div>
+                    <div className="essential-spec-label">
+                      <span className="essential-spec-val">{annonce.pieces ? `${annonce.pieces} pièce(s)` : 'Non renseigné'}</span>
+                      <span className="essential-spec-sub">Pièces</span>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Loyer */}
+                  <div className="essential-spec-item">
+                    <div className="essential-spec-icon">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 6v12M15 9.5H10a2.5 2.5 0 0 0 0 5h4a2.5 2.5 0 0 1 0 5H8" />
+                      </svg>
+                    </div>
+                    <div className="essential-spec-label">
+                      <span className="essential-spec-val">{annonce.prix ? `${formatPrice(annonce.prix)} €` : 'Non renseigné'}</span>
+                      <span className="essential-spec-sub">/mois (CC)</span>
+                    </div>
+                  </div>
+
+                  {/* Left Column: Chambres */}
+                  <div className="essential-spec-item">
+                    <div className="essential-spec-icon">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M2 4v16M2 8h20M2 17h20M22 4v16"/>
+                      </svg>
+                    </div>
+                    <div className="essential-spec-label">
+                      <span className="essential-spec-val">{annonce.chambres ? `${annonce.chambres} chambre(s)` : '0 chambre(s)'}</span>
+                      <span className="essential-spec-sub">Chambres</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Badges Bar (DPE, Extérieur, Plateforme, Scores) */}
+                <div className="essential-badges-row">
+                  {annonce.dpe && annonce.dpe !== 'Non renseigné' && (
+                    <span className={`essential-dpe-badge dpe-${annonce.dpe}`}>
+                      DPE {annonce.dpe}
+                    </span>
+                  )}
+                  {annonce.exterieur && annonce.exterieur !== 'aucun' && (
+                    <span className="essential-ext-pill">
+                      🍃 {EXTERIOR[annonce.exterieur] ?? annonce.exterieur}
+                    </span>
+                  )}
+                  {annonce.source && (
+                    <PlatformBadge source={annonce.source} />
+                  )}
+                  {annonce.scoreFranck > 0 && (
+                    <span className="essential-score-pill">
+                      <span className="avatar-mark franck">F</span> {annonce.scoreFranck}/10
+                    </span>
+                  )}
+                  {annonce.scoreLaura > 0 && (
+                    <span className="essential-score-pill">
+                      <span className="avatar-mark laura">L</span> {annonce.scoreLaura}/10
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
