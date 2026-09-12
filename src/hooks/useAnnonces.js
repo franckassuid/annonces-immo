@@ -16,7 +16,7 @@ export function useAnnonces() {
       (snap) => {
         const docs = snap.docs.map((d) => {
           const data = { id: d.id, ...d.data() };
-          const photo = getPhoto(d.id);
+          const photo = data.photo || getPhoto(d.id);
           if (photo) data.photo = photo;
           return data;
         });

@@ -228,6 +228,7 @@ export default function AddWizard({ onToast }) {
       ville,
       lat,
       lng,
+      photo: photo || '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       fav: false,

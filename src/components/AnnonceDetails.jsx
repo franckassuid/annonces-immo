@@ -246,10 +246,18 @@ export default function AnnonceDetails({ onToast }) {
         canvas.width = width;
         canvas.height = height;
         canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.80);
         setPhoto(id, dataUrl);
         setPhotoState(dataUrl);
-        onToast('Photo mise à jour !');
+        updateDoc(doc(db, 'annonces', id), {
+          photo: dataUrl,
+          updatedAt: new Date().toISOString(),
+        }).then(() => {
+          onToast('Photo enregistrée sur la base Cloud !');
+        }).catch((err) => {
+          console.error(err);
+          onToast('Photo enregistrée en local');
+        });
       };
       img.src = ev.target.result;
     };
