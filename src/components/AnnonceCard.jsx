@@ -193,10 +193,6 @@ export default function AnnonceCard({ annonce, onClick, onDelete, onToast }) {
           )}
         </div>
 
-        {/* Notes preview */}
-        {annonce.notes && (
-          <p className="card-notes-preview">{annonce.notes}</p>
-        )}
 
         {/* Visit Section */}
         <div className="card-visit-section" onClick={(e) => e.stopPropagation()}>
